@@ -68,6 +68,15 @@ st.html(f"""
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }}
 
+/* ===== TOUCH-FRIENDLY GLOBAL ===== */
+*, *::before, *::after {{
+    -webkit-tap-highlight-color: transparent;
+}}
+
+button, a, [role="button"] {{
+    touch-action: manipulation;
+}}
+
 /* Main Block Container */
 .block-container {{
     padding-top: 1.4rem !important;
@@ -76,11 +85,27 @@ st.html(f"""
     margin: 0 auto !important;
 }}
 
+@media (max-width: 1024px) {{
+    .block-container {{
+        padding-left: 18px !important;
+        padding-right: 18px !important;
+    }}
+}}
+
 @media (max-width: 768px) {{
     .block-container {{
-        padding-left: 14px !important;
-        padding-right: 14px !important;
-        padding-top: 0.9rem !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 0.7rem !important;
+        padding-bottom: 1.2rem !important;
+    }}
+}}
+
+@media (max-width: 480px) {{
+    .block-container {{
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+        padding-top: 0.5rem !important;
     }}
 }}
 
@@ -206,6 +231,58 @@ st.html(f"""
     line-height: 1.35;
 }}
 
+/* --- Header responsive --- */
+@media (max-width: 768px) {{
+    .header-wrapper {{
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
+    }}
+    .header-title-box h1 {{
+        font-size: 20px !important;
+    }}
+    .header-title-box p {{
+        font-size: 12px !important;
+    }}
+    .header-logo-badge {{
+        width: 40px;
+        height: 40px;
+    }}
+    .header-logo-badge img {{
+        width: 30px;
+        height: 30px;
+    }}
+    .header-tip-card {{
+        width: 100%;
+        padding: 8px 12px;
+    }}
+}}
+
+@media (max-width: 480px) {{
+    .header-title-box h1 {{
+        font-size: 18px !important;
+    }}
+    .header-title-box p {{
+        font-size: 11px !important;
+    }}
+    .header-left {{
+        gap: 10px;
+    }}
+    .header-logo-badge {{
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+    }}
+    .header-logo-badge img {{
+        width: 26px;
+        height: 26px;
+    }}
+    .tip-text {{
+        font-size: 11px;
+    }}
+}}
+
 /* Card Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {{
     background: #FFFFFF !important;
@@ -224,8 +301,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
 
 @media (max-width: 768px) {{
     div[data-testid="stVerticalBlockBorderWrapper"] {{
-        padding: 14px 14px !important;
-        border-radius: 16px !important;
+        padding: 14px 12px !important;
+        border-radius: 14px !important;
+        margin-bottom: 10px !important;
+    }}
+}}
+
+@media (max-width: 480px) {{
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+        padding: 12px 10px !important;
+        border-radius: 12px !important;
+        margin-bottom: 8px !important;
     }}
 }}
 
@@ -244,6 +330,17 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
     border-bottom: 1px dashed #E2E8F0;
     margin-top: 4px;
     margin-bottom: 14px;
+}}
+
+@media (max-width: 480px) {{
+    .card-header {{
+        font-size: 14px;
+        gap: 6px;
+        margin-bottom: 8px;
+    }}
+    .card-divider {{
+        margin-bottom: 10px;
+    }}
 }}
 
 /* Canvas Outer Frame */
@@ -266,6 +363,19 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
     margin: 0 auto !important;
 }}
 
+/* --- Canvas responsive --- */
+@media (max-width: 768px) {{
+    .canvas-outer-frame {{
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }}
+    .canvas-outer-frame iframe,
+    .canvas-outer-frame canvas {{
+        max-width: 100% !important;
+        height: auto !important;
+    }}
+}}
+
 /* Toolbar Labels */
 .toolbar-label {{
     font-size: 12px;
@@ -273,6 +383,13 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
     color: #64748B;
     margin-bottom: 6px;
     display: block;
+}}
+
+@media (max-width: 480px) {{
+    .toolbar-label {{
+        font-size: 11px;
+        margin-bottom: 4px;
+    }}
 }}
 
 /* Keep toolbar sub-columns horizontal */
@@ -292,6 +409,27 @@ div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) > div[data-t
     width: auto !important;
     flex: 1 1 0px !important;
     min-width: 0 !important;
+}}
+
+/* --- Toolbar mobile: allow wrapping --- */
+@media (max-width: 480px) {{
+    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) {{
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }}
+    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) > div[data-testid="column"] {{
+        flex: 1 1 28% !important;
+        min-width: 60px !important;
+    }}
+    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) {{
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        justify-content: center !important;
+    }}
+    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) > div[data-testid="column"] {{
+        flex: 0 0 auto !important;
+        min-width: 28px !important;
+    }}
 }}
 
 /* Action Buttons (Draw, Rubber, Undo, Redo, Clear) */
@@ -348,6 +486,25 @@ div[class*="st-key-act_redo"] button:hover,
 div[class*="st-key-act_clear"] button:hover {{
     background: #F8FAFC !important;
     border-color: #CBD5E1 !important;
+}}
+
+/* --- Action button mobile --- */
+@media (max-width: 768px) {{
+    div[class*="st-key-act_"] button {{
+        height: 44px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+        gap: 4px !important;
+        min-height: 44px !important;
+    }}
+}}
+
+@media (max-width: 480px) {{
+    div[class*="st-key-act_"] button {{
+        height: 42px !important;
+        font-size: 11px !important;
+        padding: 4px 6px !important;
+    }}
 }}
 
 /* Professional SVG Icons for Action Buttons via CSS Masks */
@@ -439,6 +596,15 @@ div[class*="st-key-brush_btn_active"] button {{
     color: #403974 !important;
 }}
 
+@media (max-width: 480px) {{
+    div[class*="st-key-brush_btn_"] button {{
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+    }}
+}}
+
 /* Circular Color Buttons */
 div[class*="st-key-color_btn_"] button {{
     border-radius: 50% !important;
@@ -460,6 +626,15 @@ div[class*="st-key-color_btn_"] button:hover {{
 div[class*="st-key-color_btn_active"] button {{
     box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #403974 !important;
     transform: scale(1.05) !important;
+}}
+
+@media (max-width: 480px) {{
+    div[class*="st-key-color_btn_"] button {{
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+    }}
 }}
 
 /* Predict Button */
@@ -503,6 +678,16 @@ div[class*="st-key-predict_btn"] button:active {{
     transform: scale(0.98) !important;
 }}
 
+/* --- Predict button mobile --- */
+@media (max-width: 768px) {{
+    div[class*="st-key-predict_btn"] button {{
+        min-height: 48px !important;
+        font-size: 14px !important;
+        border-radius: 12px !important;
+        padding: 12px !important;
+    }}
+}}
+
 /* Prediction Result Card */
 .prediction-card {{
     background: #FEF8F2;
@@ -533,11 +718,34 @@ div[class*="st-key-predict_btn"] button:active {{
     margin: 6px 0;
     letter-spacing: 0.02em;
     animation: predPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    word-break: break-all;
+    overflow-wrap: break-word;
 }}
 
 @media (max-width: 768px) {{
+    .prediction-card {{
+        padding: 14px 14px;
+        border-radius: 14px;
+        margin-bottom: 10px;
+    }}
     .pred-digit {{
-        font-size: 46px;
+        font-size: 44px;
+    }}
+    .pred-header {{
+        font-size: 14px;
+    }}
+    .pred-confidence {{
+        font-size: 12.5px;
+    }}
+}}
+
+@media (max-width: 480px) {{
+    .prediction-card {{
+        padding: 12px 10px;
+        border-radius: 12px;
+    }}
+    .pred-digit {{
+        font-size: 38px;
     }}
 }}
 
@@ -652,6 +860,94 @@ div[class*="st-key-predict_btn"] button:active {{
     display: inline-block;
     margin-bottom: 4px;
 }}
+
+/* ===== MOBILE BACKGROUND ATTACHMENT FIX (iOS Safari) ===== */
+@media (max-width: 768px) {{
+    .stApp {{
+        background-attachment: scroll !important;
+    }}
+}}
+
+/* ===== MODEL DETAILS RESPONSIVE ===== */
+@media (max-width: 480px) {{
+    .processed-img-box {{
+        width: 58px;
+        height: 58px;
+    }}
+    .prob-row {{
+        font-size: 12px;
+    }}
+    .prob-pct {{
+        width: 40px;
+        font-size: 11px;
+    }}
+    .prob-bar-track {{
+        margin: 0 5px;
+    }}
+}}
+
+/* Stack Model Details inner columns on mobile/small tablets */
+@media (max-width: 640px) {{
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stHorizontalBlock"]:has(.details-subhead) {{
+        flex-direction: column !important;
+        gap: 12px !important;
+    }}
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stHorizontalBlock"]:has(.details-subhead) > div[data-testid="column"] {{
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }}
+    .processed-container {{
+        justify-content: center !important;
+    }}
+}}
+
+/* Stack Brush Size and Color row vertically on screens <= 640px */
+@media (max-width: 640px) {{
+    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]):has(div[class*="st-key-color_btn_"]) {{
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }}
+    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]):has(div[class*="st-key-color_btn_"]) > div[data-testid="column"] {{
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }}
+}}
+
+/* ===== CANVAS CONTAINER & CENTERING ===== */
+div[data-testid="stCustomComponentV1"]:has(iframe[title*="st_canvas"]) {{
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}}
+
+iframe[title*="st_canvas"] {{
+    display: block !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    touch-action: none !important;
+}}
+
+@media (max-width: 768px) {{
+    .canvas-outer-frame {{
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }}
+    div[data-testid="stVerticalBlockBorderWrapper"] iframe[title*="st_canvas"] {{
+        max-width: 100% !important;
+    }}
+}}
+
+/* ===== TOUCH-FRIENDLY SELECTBOX ===== */
+@media (max-width: 768px) {{
+    div[data-testid="stSelectbox"] > div {{
+        min-height: 44px !important;
+        font-size: 14px !important;
+    }}
+}}
 </style>
 """)
 
@@ -682,6 +978,53 @@ if "last_prediction" not in st.session_state:
 
 if "last_canvas_sig" not in st.session_state:
     st.session_state.last_canvas_sig = None
+
+if "view_mode" not in st.session_state:
+    st.session_state.view_mode = "Auto"
+
+# --- Device Detection & Responsive Canvas Dimensions ---
+def get_device_canvas_config():
+    """
+    Detects device type and returns optimized canvas dimensions and brush stroke widths.
+    Automatically identifies phones, tablets, and desktops via headers, query params, or manual selector.
+    """
+    selected_mode = st.session_state.get("view_mode", "Auto")
+    
+    # Check manual override from UI
+    if selected_mode == "Mobile":
+        return 330, 250, {"Small": 10, "Medium": 18, "Large": 28}, {"Small": 18, "Medium": 28, "Large": 40}, "mobile"
+    elif selected_mode == "Tablet":
+        return 500, 320, {"Small": 12, "Medium": 20, "Large": 30}, {"Small": 22, "Medium": 32, "Large": 44}, "tablet"
+    elif selected_mode == "Desktop":
+        return 560, 360, {"Small": 12, "Medium": 22, "Large": 32}, {"Small": 24, "Medium": 36, "Large": 48}, "desktop"
+
+    # Auto mode: check URL query param and HTTP request headers
+    view_param = st.query_params.get("view", "").lower()
+    ua = ""
+    sec_mobile = ""
+    try:
+        headers = getattr(st.context, "headers", {})
+        ua = headers.get("user-agent", "").lower()
+        sec_mobile = headers.get("sec-ch-ua-mobile", "")
+    except Exception:
+        pass
+
+    is_tablet = (view_param in ["tablet", "tab", "ipad"]) or ("ipad" in ua or "tablet" in ua)
+    is_mobile = (view_param in ["mobile", "phone"]) or (
+        sec_mobile == "?1" or any(p in ua for p in ["mobile", "iphone", "android", "ipod", "blackberry", "windows phone"])
+    )
+
+    if is_mobile and not is_tablet:
+        # Phone: 330px fits iPhone SE (375px) through iPhone 16 Pro Max (430px) without overflow
+        return 330, 250, {"Small": 10, "Medium": 18, "Large": 28}, {"Small": 18, "Medium": 28, "Large": 40}, "mobile"
+    elif is_tablet:
+        # Tablet: 500px fits iPad portrait (768px) and landscape
+        return 500, 320, {"Small": 12, "Medium": 20, "Large": 30}, {"Small": 22, "Medium": 32, "Large": 44}, "tablet"
+    else:
+        # Desktop / Laptop: 560px
+        return 560, 360, {"Small": 12, "Medium": 22, "Large": 32}, {"Small": 24, "Medium": 36, "Large": 48}, "desktop"
+
+CANVAS_W, CANVAS_H, BRUSH_MAP_DRAW, BRUSH_MAP_RUBBER, CURRENT_DEVICE_MODE = get_device_canvas_config()
 
 # --- Top Header with Professional Icons ---
 logo_html = f'<img src="data:image/png;base64,{LOGO_B64}" />' if LOGO_B64 else '<span style="font-weight:800; color:#312C51;">?</span>'
@@ -723,18 +1066,6 @@ with col_left:
         <div class="card-divider"></div>
         """)
 
-        # Brush size mapping: Drawing strokes vs Rubber eraser stroke widths
-        BRUSH_MAP_DRAW = {
-            "Small": 12,
-            "Medium": 22,
-            "Large": 32,
-        }
-        BRUSH_MAP_RUBBER = {
-            "Small": 24,
-            "Medium": 36,
-            "Large": 48,
-        }
-
         # Color Palette matching target mockup
         PALETTE = [
             ("#312C51", "aubergine"),
@@ -761,12 +1092,12 @@ with col_left:
             stroke_width=active_width,
             stroke_color=active_stroke,
             background_color="#FFFFFF",
-            height=360,
-            width=560,
+            height=CANVAS_H,
+            width=CANVAS_W,
             drawing_mode="freedraw",
             initial_drawing=st.session_state.initial_drawing,
             display_toolbar=False,
-            key=f"canvas_mnist_{st.session_state.canvas_key}",
+            key=f"canvas_mnist_{st.session_state.canvas_key}_{CANVAS_W}_{CANVAS_H}",
             update_streamlit=True,
         )
         st.html('</div>')
@@ -915,6 +1246,31 @@ with col_right:
         selected_meta = AVAILABLE_MODELS[selected_model_name]
 
         predict_btn_clicked = st.button("Predict Digit", key="predict_btn")
+
+        # Responsive Layout Preview Switcher
+        st.html(f"""
+        <div style="margin-top: 14px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11.5px; font-weight: 600; color: #64748B;">Device View</span>
+            <span style="font-size: 10.5px; color: #574EA6; font-weight: 600; background: #F3F0FF; padding: 2px 8px; border-radius: 6px;">{CURRENT_DEVICE_MODE.capitalize()} ({CANVAS_W}px)</span>
+        </div>
+        """)
+
+        pills_val = st.pills(
+            "Device View",
+            options=["Auto", "Desktop", "Tablet", "Mobile"],
+            default=st.session_state.view_mode,
+            label_visibility="collapsed",
+            key="device_view_pills",
+        )
+        if pills_val and pills_val != st.session_state.view_mode:
+            st.session_state.view_mode = pills_val
+            st.session_state.canvas_key += 1
+            st.session_state.initial_drawing = None
+            st.session_state.canvas_history = []
+            st.session_state.redo_stack = []
+            st.session_state.last_prediction = None
+            st.session_state.last_canvas_sig = None
+            st.rerun()
 
     # ----------------------------------------------------------
     # Smart Multi-Digit Prediction Engine (Uses latest visible canvas)
