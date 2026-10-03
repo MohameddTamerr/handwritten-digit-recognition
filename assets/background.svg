@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <style>
+      .bg-base { fill: #FDF9F6; }
+      .blob-lavender { fill: #EAE5F5; opacity: 0.65; }
+      .blob-peach { fill: #FCEFE4; opacity: 0.7; }
+      .blob-coral { fill: #FCE8E2; opacity: 0.65; }
+      .num-lavender { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; font-weight: 800; fill: #D7CEE5; }
+      .num-peach { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; font-weight: 800; fill: #F6D7B4; }
+      .num-coral { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; font-weight: 800; fill: #F7D1BE; }
+      .dash-line { fill: none; stroke: #E6DFD5; stroke-width: 2.2; stroke-dasharray: 6, 8; stroke-linecap: round; }
+      .dot-peach { fill: #F6D7B4; }
+      .dot-coral { fill: #F7D1BE; }
+      .dot-lavender { fill: #D7CEE5; }
+      .ring-lavender { fill: none; stroke: #D7CEE5; stroke-width: 3.5; }
+    </style>
+  </defs>
+
+  <!-- Base warm background -->
+  <rect width="1600" height="900" class="bg-base" />
+
+  <!-- Corner Blobs -->
+  <path d="M-80,-60 Q120,-80 180,60 T60,240 Q-40,260 -100,160 Z" class="blob-lavender" />
+  <path d="M-60,700 Q140,680 200,800 T80,980 Q-60,1000 -90,880 Z" class="blob-peach" />
+  <path d="M1450,-80 Q1680,-40 1660,140 T1500,260 Q1380,240 1360,100 Z" class="blob-lavender" />
+  <path d="M1420,720 Q1660,700 1680,860 T1520,980 Q1360,940 1380,820 Z" class="blob-peach" />
+
+  <!-- Dashed Trajectory Curves Left -->
+  <path d="M-20,180 C120,220 220,140 260,320 S180,560 60,620" class="dash-line" />
+  <path d="M40,480 C180,500 240,640 200,780" class="dash-line" />
+
+  <!-- Dashed Trajectory Curves Right -->
+  <path d="M1620,180 C1480,220 1380,140 1340,320 S1420,560 1540,620" class="dash-line" />
+  <path d="M1560,480 C1420,500 1360,640 1400,780" class="dash-line" />
+
+  <!-- Floating Confetti Dots and Rings Left -->
+  <circle cx="48" cy="60" r="6" class="dot-lavender" />
+  <circle cx="220" cy="110" r="8" class="dot-peach" />
+  <circle cx="270" cy="300" r="6" class="dot-peach" />
+  <circle cx="215" cy="310" r="11" class="ring-lavender" />
+  <circle cx="280" cy="620" r="10" class="dot-coral" />
+  <circle cx="75" cy="670" r="14" class="ring-lavender" />
+  <circle cx="200" cy="860" r="7" class="dot-lavender" />
+
+  <!-- Floating Confetti Dots and Rings Right -->
+  <circle cx="1330" cy="135" r="8" class="dot-coral" />
+  <circle cx="1440" cy="270" r="11" class="ring-lavender" />
+  <circle cx="1540" cy="250" r="6" class="dot-lavender" />
+  <circle cx="1345" cy="580" r="12" class="dot-peach" />
+  <circle cx="1520" cy="660" r="6" class="dot-peach" />
+  <circle cx="1480" cy="830" r="10" class="dot-coral" />
+
+  <!-- Left Floating Digits (7, 0, 2, 5) -->
+  <g transform="translate(180, 130) rotate(-10)">
+    <text font-size="120" class="num-lavender" text-anchor="middle">7</text>
+  </g>
+  <g transform="translate(70, 310) rotate(-6)">
+    <text font-size="115" class="num-lavender" text-anchor="middle">0</text>
+  </g>
+  <g transform="translate(195, 520) rotate(8)">
+    <text font-size="125" class="num-peach" text-anchor="middle">2</text>
+  </g>
+  <g transform="translate(130, 750) rotate(-10)">
+    <text font-size="120" class="num-coral" text-anchor="middle">5</text>
+  </g>
+
+  <!-- Right Floating Digits (3, 4, 8, 6, 1) -->
+  <g transform="translate(1425, 125) rotate(-6)">
+    <text font-size="125" class="num-peach" text-anchor="middle">3</text>
+  </g>
+  <g transform="translate(1540, 310) rotate(10)">
+    <text font-size="115" class="num-coral" text-anchor="middle">4</text>
+  </g>
+  <g transform="translate(1480, 520) rotate(-6)">
+    <text font-size="120" class="num-lavender" text-anchor="middle">8</text>
+  </g>
+  <g transform="translate(1540, 730) rotate(12)">
+    <text font-size="115" class="num-peach" text-anchor="middle">6</text>
+  </g>
+  <g transform="translate(1380, 830) rotate(-16)">
+    <text font-size="120" class="num-lavender" text-anchor="middle">1</text>
+  </g>
+</svg>
