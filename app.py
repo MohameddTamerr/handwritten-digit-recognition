@@ -77,36 +77,14 @@ button, a, [role="button"] {{
     touch-action: manipulation;
 }}
 
-/* Main Block Container */
+/* ===== FLUID RESPONSIVE CONTAINER & SPACING ===== */
 .block-container {{
-    padding-top: 1.4rem !important;
-    padding-bottom: 2rem !important;
-    max-width: 1140px !important;
+    padding-top: clamp(0.5rem, 1.5vw, 1.2rem) !important;
+    padding-bottom: clamp(1rem, 2vw, 2rem) !important;
+    padding-left: clamp(8px, 2.5vw, 24px) !important;
+    padding-right: clamp(8px, 2.5vw, 24px) !important;
+    max-width: min(1320px, 95vw) !important;
     margin: 0 auto !important;
-}}
-
-@media (max-width: 1024px) {{
-    .block-container {{
-        padding-left: 18px !important;
-        padding-right: 18px !important;
-    }}
-}}
-
-@media (max-width: 768px) {{
-    .block-container {{
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-        padding-top: 0.7rem !important;
-        padding-bottom: 1.2rem !important;
-    }}
-}}
-
-@media (max-width: 480px) {{
-    .block-container {{
-        padding-left: 6px !important;
-        padding-right: 6px !important;
-        padding-top: 0.5rem !important;
-    }}
 }}
 
 /* Hide Streamlit default headers & menu */
@@ -154,24 +132,24 @@ button, a, [role="button"] {{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: clamp(12px, 2vw, 20px);
     flex-wrap: wrap;
-    gap: 14px;
+    gap: clamp(8px, 1.8vw, 14px);
     animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }}
 
 .header-left {{
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: clamp(8px, 1.8vw, 14px);
 }}
 
 .header-logo-badge {{
-    width: 48px;
-    height: 48px;
+    width: clamp(38px, 6.5vw, 48px);
+    height: clamp(38px, 6.5vw, 48px);
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 12px;
+    border-radius: clamp(10px, 1.5vw, 12px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -185,14 +163,14 @@ button, a, [role="button"] {{
 }}
 
 .header-logo-badge img {{
-    width: 36px;
-    height: 36px;
+    width: clamp(28px, 5vw, 36px);
+    height: clamp(28px, 5vw, 36px);
     object-fit: contain;
     border-radius: 6px;
 }}
 
 .header-title-box h1 {{
-    font-size: 24px !important;
+    font-size: clamp(18px, 3.8vw, 24px) !important;
     font-weight: 800 !important;
     color: #1E1B4B !important;
     margin: 0 !important;
@@ -201,7 +179,7 @@ button, a, [role="button"] {{
 }}
 
 .header-title-box p {{
-    font-size: 13.5px !important;
+    font-size: clamp(11.5px, 2.2vw, 13.5px) !important;
     color: #64748B !important;
     margin: 3px 0 0 0 !important;
     font-weight: 500 !important;
@@ -210,11 +188,11 @@ button, a, [role="button"] {{
 .header-tip-card {{
     background: #FFFFFF;
     border: 1px solid #FEF08A;
-    border-radius: 12px;
-    padding: 10px 18px;
+    border-radius: clamp(9px, 1.5vw, 12px);
+    padding: clamp(7px, 1.5vw, 10px) clamp(10px, 2vw, 18px);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: clamp(6px, 1.2vw, 10px);
     box-shadow: 0 2px 8px rgba(50, 46, 83, 0.03);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }}
@@ -225,94 +203,40 @@ button, a, [role="button"] {{
 }}
 
 .tip-text {{
-    font-size: 12px;
+    font-size: clamp(11px, 2.1vw, 12px);
     color: #475569;
     font-weight: 500;
     line-height: 1.35;
 }}
 
-/* --- Header responsive --- */
 @media (max-width: 768px) {{
     .header-wrapper {{
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
-        margin-bottom: 14px;
-    }}
-    .header-title-box h1 {{
-        font-size: 20px !important;
-    }}
-    .header-title-box p {{
-        font-size: 12px !important;
-    }}
-    .header-logo-badge {{
-        width: 40px;
-        height: 40px;
-    }}
-    .header-logo-badge img {{
-        width: 30px;
-        height: 30px;
     }}
     .header-tip-card {{
         width: 100%;
-        padding: 8px 12px;
-    }}
-}}
-
-@media (max-width: 480px) {{
-    .header-title-box h1 {{
-        font-size: 18px !important;
-    }}
-    .header-title-box p {{
-        font-size: 11px !important;
-    }}
-    .header-left {{
-        gap: 10px;
-    }}
-    .header-logo-badge {{
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-    }}
-    .header-logo-badge img {{
-        width: 26px;
-        height: 26px;
-    }}
-    .tip-text {{
-        font-size: 11px;
+        box-sizing: border-box;
     }}
 }}
 
 /* Card Containers */
 div[data-testid="stVerticalBlockBorderWrapper"] {{
     background: #FFFFFF !important;
-    border-radius: 18px !important;
+    border-radius: clamp(12px, 1.8vw, 18px) !important;
     border: 1px solid #EDEEF2 !important;
     box-shadow: 0 4px 20px rgba(50, 46, 83, 0.05) !important;
-    padding: 20px 22px !important;
-    margin-bottom: 14px !important;
+    padding: clamp(12px, 2vw, 20px) clamp(10px, 2vw, 22px) !important;
+    margin-bottom: clamp(10px, 1.5vw, 14px) !important;
     animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    transition: box-shadow 0.2s ease !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }}
 
 div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
     box-shadow: 0 6px 24px rgba(50, 46, 83, 0.08) !important;
-}}
-
-@media (max-width: 768px) {{
-    div[data-testid="stVerticalBlockBorderWrapper"] {{
-        padding: 14px 12px !important;
-        border-radius: 14px !important;
-        margin-bottom: 10px !important;
-    }}
-}}
-
-@media (max-width: 480px) {{
-    div[data-testid="stVerticalBlockBorderWrapper"] {{
-        padding: 12px 10px !important;
-        border-radius: 12px !important;
-        margin-bottom: 8px !important;
-    }}
 }}
 
 /* Card Headers */
@@ -320,128 +244,89 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 16px;
+    font-size: clamp(14px, 2.5vw, 16px);
     font-weight: 700;
     color: #1E1B4B;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }}
 
 .card-divider {{
     border-bottom: 1px dashed #E2E8F0;
     margin-top: 4px;
-    margin-bottom: 14px;
+    margin-bottom: clamp(8px, 1.5vw, 14px);
 }}
 
-@media (max-width: 480px) {{
-    .card-header {{
-        font-size: 14px;
-        gap: 6px;
-        margin-bottom: 8px;
-    }}
-    .card-divider {{
-        margin-bottom: 10px;
-    }}
-}}
-
-/* Canvas Outer Frame */
+/* ===== DYNAMIC CANVAS FRAME & IFRAME ===== */
 .canvas-outer-frame {{
     border: 1.5px solid #E2E8F0;
-    border-radius: 12px;
+    border-radius: clamp(10px, 1.6vw, 14px);
     padding: 0;
     background: #FFFFFF;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: clamp(10px, 1.5vw, 14px);
     overflow: hidden;
-    width: 100%;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    position: relative;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
 }}
 
-.canvas-outer-frame iframe {{
-    border-radius: 10px !important;
+div[data-testid="stCustomComponentV1"]:has(iframe[title*="st_canvas"]) {{
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}}
+
+iframe[title*="st_canvas"] {{
     display: block !important;
     margin: 0 auto !important;
-}}
-
-/* --- Canvas responsive --- */
-@media (max-width: 768px) {{
-    .canvas-outer-frame {{
-        border-radius: 10px;
-        margin-bottom: 10px;
-    }}
-    .canvas-outer-frame iframe,
-    .canvas-outer-frame canvas {{
-        max-width: 100% !important;
-        height: auto !important;
-    }}
+    width: 100% !important;
+    max-width: 100% !important;
+    touch-action: none !important;
+    border: none !important;
 }}
 
 /* Toolbar Labels */
 .toolbar-label {{
-    font-size: 12px;
+    font-size: clamp(11px, 2.2vw, 12px);
     font-weight: 600;
     color: #64748B;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     display: block;
 }}
 
-@media (max-width: 480px) {{
-    .toolbar-label {{
-        font-size: 11px;
-        margin-bottom: 4px;
-    }}
-}}
-
-/* Keep toolbar sub-columns horizontal */
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]),
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]),
+/* ===== FLUID ACTION BUTTONS (Draw, Rubber, Undo, Redo, Clear) ===== */
 div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) {{
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: clamp(3px, 1vw, 8px) !important;
+    width: 100% !important;
 }}
 
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]) > div[data-testid="column"],
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) > div[data-testid="column"],
 div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) > div[data-testid="column"] {{
     width: auto !important;
     flex: 1 1 0px !important;
     min-width: 0 !important;
 }}
 
-/* --- Toolbar mobile: allow wrapping --- */
-@media (max-width: 480px) {{
-    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) {{
-        flex-wrap: wrap !important;
-        gap: 4px !important;
-    }}
-    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) > div[data-testid="column"] {{
-        flex: 1 1 28% !important;
-        min-width: 60px !important;
-    }}
-    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) {{
-        flex-wrap: wrap !important;
-        gap: 6px !important;
-        justify-content: center !important;
-    }}
-    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) > div[data-testid="column"] {{
-        flex: 0 0 auto !important;
-        min-width: 28px !important;
-    }}
-}}
-
-/* Action Buttons (Draw, Rubber, Undo, Redo, Clear) */
 div[class*="st-key-act_"] button {{
-    height: 40px !important;
-    font-size: 13px !important;
-    border-radius: 10px !important;
+    height: clamp(38px, 5.5vw, 42px) !important;
+    min-height: clamp(38px, 5.5vw, 42px) !important;
+    font-size: clamp(10.5px, 2.5vw, 13px) !important;
+    border-radius: clamp(7px, 1.4vw, 10px) !important;
     width: 100% !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 6px !important;
+    gap: clamp(2px, 0.8vw, 6px) !important;
+    padding: clamp(2px, 0.8vw, 6px) clamp(2px, 0.8vw, 8px) !important;
+    white-space: nowrap !important;
     transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
     cursor: pointer !important;
 }}
@@ -488,96 +373,100 @@ div[class*="st-key-act_clear"] button:hover {{
     border-color: #CBD5E1 !important;
 }}
 
-/* --- Action button mobile --- */
-@media (max-width: 768px) {{
-    div[class*="st-key-act_"] button {{
-        height: 44px !important;
-        font-size: 12px !important;
-        border-radius: 8px !important;
-        gap: 4px !important;
-        min-height: 44px !important;
-    }}
-}}
-
-@media (max-width: 480px) {{
-    div[class*="st-key-act_"] button {{
-        height: 42px !important;
-        font-size: 11px !important;
-        padding: 4px 6px !important;
-    }}
-}}
-
 /* Professional SVG Icons for Action Buttons via CSS Masks */
 div[class*="st-key-act_draw"] button::before {{
     content: "";
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: clamp(12px, 2.5vw, 14px);
+    height: clamp(12px, 2.5vw, 14px);
     background-color: currentColor;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E") no-repeat center;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E") no-repeat center;
     -webkit-mask-size: contain;
     mask-size: contain;
+    flex-shrink: 0;
 }}
 
 div[class*="st-key-act_rubber"] button::before {{
     content: "";
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: clamp(12px, 2.5vw, 14px);
+    height: clamp(12px, 2.5vw, 14px);
     background-color: currentColor;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21'/%3E%3Cpath d='M22 21H7'/%3E%3Cpath d='m5 11 9 9'/%3E%3C/svg%3E") no-repeat center;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21'/%3E%3Cpath d='M22 21H7'/%3E%3Cpath d='m5 11 9 9'/%3E%3C/svg%3E") no-repeat center;
     -webkit-mask-size: contain;
     mask-size: contain;
+    flex-shrink: 0;
 }}
 
 div[class*="st-key-act_undo"] button::before {{
     content: "";
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: clamp(12px, 2.5vw, 14px);
+    height: clamp(12px, 2.5vw, 14px);
     background-color: currentColor;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7v6h6'/%3E%3Cpath d='M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13'/%3E%3C/svg%3E") no-repeat center;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7v6h6'/%3E%3Cpath d='M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13'/%3E%3C/svg%3E") no-repeat center;
     -webkit-mask-size: contain;
     mask-size: contain;
+    flex-shrink: 0;
 }}
 
 div[class*="st-key-act_redo"] button::before {{
     content: "";
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: clamp(12px, 2.5vw, 14px);
+    height: clamp(12px, 2.5vw, 14px);
     background-color: currentColor;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 7v6h-6'/%3E%3Cpath d='M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13'/%3E%3C/svg%3E") no-repeat center;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 7v6h-6'/%3E%3Cpath d='M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13'/%3E%3C/svg%3E") no-repeat center;
     -webkit-mask-size: contain;
     mask-size: contain;
+    flex-shrink: 0;
 }}
 
 div[class*="st-key-act_clear"] button::before {{
     content: "";
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: clamp(12px, 2.5vw, 14px);
+    height: clamp(12px, 2.5vw, 14px);
     background-color: currentColor;
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") no-repeat center;
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3C/svg%3E") no-repeat center;
     -webkit-mask-size: contain;
     mask-size: contain;
+    flex-shrink: 0;
 }}
 
-/* Circular Brush Buttons */
+/* ===== FLUID BRUSH & COLOR BUTTONS ===== */
+div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]),
+div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) {{
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: clamp(3px, 1vw, 8px) !important;
+    width: 100% !important;
+}}
+
+div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]) > div[data-testid="column"],
+div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) > div[data-testid="column"] {{
+    width: auto !important;
+    flex: 1 1 0px !important;
+    min-width: 0 !important;
+}}
+
 div[class*="st-key-brush_btn_"] button {{
     border-radius: 50% !important;
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    min-height: 30px !important;
+    width: clamp(28px, 5.5vw, 34px) !important;
+    height: clamp(28px, 5.5vw, 34px) !important;
+    min-width: clamp(28px, 5.5vw, 34px) !important;
+    min-height: clamp(28px, 5.5vw, 34px) !important;
     background: #FFFFFF !important;
     border: 1px solid #E2E8F0 !important;
     padding: 0 !important;
+    margin: 0 auto !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -596,22 +485,12 @@ div[class*="st-key-brush_btn_active"] button {{
     color: #403974 !important;
 }}
 
-@media (max-width: 480px) {{
-    div[class*="st-key-brush_btn_"] button {{
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
-    }}
-}}
-
-/* Circular Color Buttons */
 div[class*="st-key-color_btn_"] button {{
     border-radius: 50% !important;
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
-    min-height: 24px !important;
+    width: clamp(24px, 4.8vw, 30px) !important;
+    height: clamp(24px, 4.8vw, 30px) !important;
+    min-width: clamp(24px, 4.8vw, 30px) !important;
+    min-height: clamp(24px, 4.8vw, 30px) !important;
     padding: 0 !important;
     margin: 0 auto !important;
     border: none !important;
@@ -620,7 +499,7 @@ div[class*="st-key-color_btn_"] button {{
 }}
 
 div[class*="st-key-color_btn_"] button:hover {{
-    transform: scale(1.18) !important;
+    transform: scale(1.15) !important;
 }}
 
 div[class*="st-key-color_btn_active"] button {{
@@ -628,23 +507,29 @@ div[class*="st-key-color_btn_active"] button {{
     transform: scale(1.05) !important;
 }}
 
-@media (max-width: 480px) {{
-    div[class*="st-key-color_btn_"] button {{
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        min-height: 30px !important;
+/* Stack Brush Size and Color row vertically on screens <= 640px */
+@media (max-width: 640px) {{
+    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]):has(div[class*="st-key-color_btn_"]) {{
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+    }}
+    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]):has(div[class*="st-key-color_btn_"]) > div[data-testid="column"] {{
+        width: 100% !important;
+        flex: 1 1 100% !important;
     }}
 }}
 
-/* Predict Button */
+/* ===== FLUID PREDICT BUTTON ===== */
 div[class*="st-key-predict_btn"] button {{
     background: #574EA6 !important;
     color: #FFFFFF !important;
     font-weight: 700 !important;
-    font-size: 13.5px !important;
-    border-radius: 10px !important;
-    padding: 10px !important;
+    font-size: clamp(13px, 2.8vw, 14.5px) !important;
+    border-radius: clamp(8px, 1.8vw, 11px) !important;
+    height: clamp(42px, 6vw, 48px) !important;
+    min-height: clamp(42px, 6vw, 48px) !important;
+    padding: clamp(8px, 1.5vw, 12px) !important;
     width: 100% !important;
     border: none !important;
     box-shadow: 0 4px 12px rgba(87, 78, 166, 0.25) !important;
@@ -666,6 +551,7 @@ div[class*="st-key-predict_btn"] button::before {{
     mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/%3E%3C/svg%3E") no-repeat center;
     -webkit-mask-size: contain;
     mask-size: contain;
+    flex-shrink: 0;
 }}
 
 div[class*="st-key-predict_btn"] button:hover {{
@@ -678,24 +564,14 @@ div[class*="st-key-predict_btn"] button:active {{
     transform: scale(0.98) !important;
 }}
 
-/* --- Predict button mobile --- */
-@media (max-width: 768px) {{
-    div[class*="st-key-predict_btn"] button {{
-        min-height: 48px !important;
-        font-size: 14px !important;
-        border-radius: 12px !important;
-        padding: 12px !important;
-    }}
-}}
-
-/* Prediction Result Card */
+/* ===== FLUID PREDICTION RESULT CARD ===== */
 .prediction-card {{
     background: #FEF8F2;
     border: 1.5px solid #FBEADB;
-    border-radius: 18px;
-    padding: 16px 20px;
+    border-radius: clamp(12px, 2vw, 18px);
+    padding: clamp(12px, 2vw, 18px) clamp(12px, 2vw, 20px);
     text-align: center;
-    margin-bottom: 14px;
+    margin-bottom: clamp(10px, 1.5vw, 14px);
     box-shadow: 0 4px 18px rgba(241, 194, 142, 0.1);
     animation: fadeInUp 0.4s ease both;
 }}
@@ -703,54 +579,28 @@ div[class*="st-key-predict_btn"] button:active {{
 .pred-header {{
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    font-size: 15px;
+    font-size: clamp(13px, 2.5vw, 15px);
     font-weight: 700;
     color: #1E1B4B;
     margin-bottom: 4px;
 }}
 
 .pred-digit {{
-    font-size: 56px;
+    font-size: clamp(38px, 8.5vw, 58px);
     font-weight: 800;
     color: #1E1B4B;
-    line-height: 1;
-    margin: 6px 0;
+    line-height: 1.1;
+    margin: 4px 0;
     letter-spacing: 0.02em;
     animation: predPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     word-break: break-all;
     overflow-wrap: break-word;
 }}
 
-@media (max-width: 768px) {{
-    .prediction-card {{
-        padding: 14px 14px;
-        border-radius: 14px;
-        margin-bottom: 10px;
-    }}
-    .pred-digit {{
-        font-size: 44px;
-    }}
-    .pred-header {{
-        font-size: 14px;
-    }}
-    .pred-confidence {{
-        font-size: 12.5px;
-    }}
-}}
-
-@media (max-width: 480px) {{
-    .prediction-card {{
-        padding: 12px 10px;
-        border-radius: 12px;
-    }}
-    .pred-digit {{
-        font-size: 38px;
-    }}
-}}
-
 .pred-confidence {{
-    font-size: 13.5px;
+    font-size: clamp(12px, 2.4vw, 13.5px);
     font-weight: 500;
     color: #475569;
     margin: 0;
@@ -761,9 +611,9 @@ div[class*="st-key-predict_btn"] button:active {{
     color: #1E1B4B;
 }}
 
-/* Model Details Section */
+/* ===== FLUID MODEL DETAILS SECTION ===== */
 .details-subhead {{
-    font-size: 12px;
+    font-size: clamp(11.5px, 2.3vw, 12px);
     font-weight: 700;
     color: #1E1B4B;
     margin-bottom: 8px;
@@ -780,8 +630,8 @@ div[class*="st-key-predict_btn"] button:active {{
     background: #000000;
     border-radius: 8px;
     padding: 4px;
-    width: 68px;
-    height: 68px;
+    width: clamp(54px, 11vw, 68px);
+    height: clamp(54px, 11vw, 68px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -795,6 +645,9 @@ div[class*="st-key-predict_btn"] button:active {{
 .processed-img-box img {{
     image-rendering: pixelated;
     border-radius: 4px;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }}
 
 .prob-table {{
@@ -803,18 +656,21 @@ div[class*="st-key-predict_btn"] button:active {{
     gap: 4px;
     margin-top: 2px;
     margin-bottom: 8px;
+    width: 100%;
 }}
 
 .prob-row {{
     display: flex;
     align-items: center;
-    font-size: 12.5px;
+    font-size: clamp(11.5px, 2.3vw, 12.5px);
+    width: 100%;
 }}
 
 .prob-digit {{
     width: 14px;
     color: #1E1B4B;
     font-weight: 700;
+    flex-shrink: 0;
 }}
 
 .prob-bar-track {{
@@ -822,7 +678,7 @@ div[class*="st-key-predict_btn"] button:active {{
     height: 7px;
     background-color: #F1F5F9;
     border-radius: 4px;
-    margin: 0 8px;
+    margin: 0 clamp(4px, 1.2vw, 8px);
     overflow: hidden;
 }}
 
@@ -841,12 +697,13 @@ div[class*="st-key-predict_btn"] button:active {{
 }}
 
 .prob-pct {{
-    width: 44px;
+    width: clamp(38px, 8vw, 44px);
     text-align: right;
     color: #64748B;
-    font-size: 11.5px;
+    font-size: clamp(10.5px, 2.2vw, 11.5px);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
 }}
 
 .digit-label-badge {{
@@ -859,31 +716,6 @@ div[class*="st-key-predict_btn"] button:active {{
     border-radius: 5px;
     display: inline-block;
     margin-bottom: 4px;
-}}
-
-/* ===== MOBILE BACKGROUND ATTACHMENT FIX (iOS Safari) ===== */
-@media (max-width: 768px) {{
-    .stApp {{
-        background-attachment: scroll !important;
-    }}
-}}
-
-/* ===== MODEL DETAILS RESPONSIVE ===== */
-@media (max-width: 480px) {{
-    .processed-img-box {{
-        width: 58px;
-        height: 58px;
-    }}
-    .prob-row {{
-        font-size: 12px;
-    }}
-    .prob-pct {{
-        width: 40px;
-        font-size: 11px;
-    }}
-    .prob-bar-track {{
-        margin: 0 5px;
-    }}
 }}
 
 /* Stack Model Details inner columns on mobile/small tablets */
@@ -901,47 +733,27 @@ div[class*="st-key-predict_btn"] button:active {{
     }}
 }}
 
-/* Stack Brush Size and Color row vertically on screens <= 640px */
-@media (max-width: 640px) {{
-    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]):has(div[class*="st-key-color_btn_"]) {{
+/* Clean Column Stacking on screens <= 860px */
+@media (max-width: 860px) {{
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:first-child:has(.canvas-outer-frame)) {{
         flex-direction: column !important;
-        align-items: stretch !important;
         gap: 12px !important;
     }}
-    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]):has(div[class*="st-key-color_btn_"]) > div[data-testid="column"] {{
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:first-child:has(.canvas-outer-frame)) > div[data-testid="column"] {{
         width: 100% !important;
         flex: 1 1 100% !important;
+        max-width: 100% !important;
     }}
 }}
 
-/* ===== CANVAS CONTAINER & CENTERING ===== */
-div[data-testid="stCustomComponentV1"]:has(iframe[title*="st_canvas"]) {{
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    width: 100% !important;
-    overflow: hidden !important;
-}}
-
-iframe[title*="st_canvas"] {{
-    display: block !important;
-    margin: 0 auto !important;
-    max-width: 100% !important;
-    touch-action: none !important;
-}}
-
+/* iOS Safari fixed background fix */
 @media (max-width: 768px) {{
-    .canvas-outer-frame {{
-        width: 100% !important;
-        max-width: 100% !important;
-        overflow: hidden !important;
-    }}
-    div[data-testid="stVerticalBlockBorderWrapper"] iframe[title*="st_canvas"] {{
-        max-width: 100% !important;
+    .stApp {{
+        background-attachment: scroll !important;
     }}
 }}
 
-/* ===== TOUCH-FRIENDLY SELECTBOX ===== */
+/* Touch-Friendly Selectbox */
 @media (max-width: 768px) {{
     div[data-testid="stSelectbox"] > div {{
         min-height: 44px !important;
@@ -950,6 +762,96 @@ iframe[title*="st_canvas"] {{
 }}
 </style>
 """)
+
+# Client-Side Dynamic Viewport & Responsive Iframe Bridge
+st.html("""
+<script>
+(function() {
+    function adjustCanvasFluid() {
+        const frame = document.querySelector('.canvas-outer-frame');
+        if (!frame) return;
+
+        const curWidth = Math.floor(frame.getBoundingClientRect().width);
+        if (curWidth <= 50) return;
+
+        const targetW = Math.max(280, Math.min(850, curWidth));
+
+        const iframe = document.querySelector('iframe[title*="st_canvas"]');
+        if (iframe) {
+            iframe.style.setProperty('width', '100%', 'important');
+            iframe.style.setProperty('max-width', '100%', 'important');
+
+            try {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                if (doc && !doc.getElementById('canvas-fluid-style')) {
+                    const style = doc.createElement('style');
+                    style.id = 'canvas-fluid-style';
+                    style.textContent = `
+                        html, body, #root {
+                            width: 100% !important;
+                            height: 100% !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            overflow: hidden !important;
+                            display: flex !important;
+                            justify-content: center !important;
+                            align-items: center !important;
+                        }
+                        .canvas-container {
+                            width: 100% !important;
+                            height: 100% !important;
+                            margin: 0 auto !important;
+                        }
+                        canvas.lower-canvas, canvas.upper-canvas {
+                            width: 100% !important;
+                            height: 100% !important;
+                            left: 0 !important;
+                            top: 0 !important;
+                            touch-action: none !important;
+                        }
+                    `;
+                    doc.head.appendChild(style);
+                }
+            } catch(e) {}
+        }
+
+        const url = new URL(window.location);
+        const currentParam = parseInt(url.searchParams.get('cw') || '0', 10);
+
+        if (currentParam === 0 || Math.abs(curWidth - currentParam) > 75) {
+            const isInteracting = document.querySelector('.canvas-outer-frame:active') !== null;
+            if (!isInteracting) {
+                url.searchParams.set('cw', targetW.toString());
+                if (currentParam === 0) {
+                    window.location.replace(url.toString());
+                } else {
+                    window.history.replaceState({}, '', url.toString());
+                }
+            }
+        }
+    }
+
+    if (document.readyState === 'complete') {
+        setTimeout(adjustCanvasFluid, 60);
+    } else {
+        window.addEventListener('load', () => setTimeout(adjustCanvasFluid, 60));
+    }
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(adjustCanvasFluid, 300);
+    });
+
+    const observer = new ResizeObserver(() => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(adjustCanvasFluid, 150);
+    });
+    const mainTarget = document.querySelector('.block-container') || document.body;
+    observer.observe(mainTarget);
+})();
+</script>
+""", unsafe_allow_javascript=True)
 
 # --- State Management ---
 if "canvas_key" not in st.session_state:
@@ -979,27 +881,35 @@ if "last_prediction" not in st.session_state:
 if "last_canvas_sig" not in st.session_state:
     st.session_state.last_canvas_sig = None
 
-if "view_mode" not in st.session_state:
-    st.session_state.view_mode = "Auto"
+if "canvas_ratio" not in st.session_state:
+    st.session_state.canvas_ratio = "Standard"
 
-# --- Device Detection & Responsive Canvas Dimensions ---
+# --- Dynamic Fluid Canvas Dimension Engine ---
+CANVAS_RATIOS = {
+    "Standard": 0.625,  # 16:10 balanced ratio
+    "Wide": 0.55,      # 16:9 panoramic ratio
+    "Compact": 0.72,   # 4:3 taller ratio
+}
+
 def get_device_canvas_config():
     """
-    Detects device type and returns optimized canvas dimensions and brush stroke widths.
-    Automatically identifies phones, tablets, and desktops via headers, query params, or manual selector.
+    Dynamically computes canvas dimensions and stroke widths based on the client's
+    actual container width (via URL query param 'cw' or viewport hints) and selected aspect ratio.
+    Automatically adapts to all phone widths (360px-440px), tablets, and desktops without rigid static sizes.
     """
-    selected_mode = st.session_state.get("view_mode", "Auto")
-    
-    # Check manual override from UI
-    if selected_mode == "Mobile":
-        return 330, 250, {"Small": 10, "Medium": 18, "Large": 28}, {"Small": 18, "Medium": 28, "Large": 40}, "mobile"
-    elif selected_mode == "Tablet":
-        return 500, 320, {"Small": 12, "Medium": 20, "Large": 30}, {"Small": 22, "Medium": 32, "Large": 44}, "tablet"
-    elif selected_mode == "Desktop":
-        return 560, 360, {"Small": 12, "Medium": 22, "Large": 32}, {"Small": 24, "Medium": 36, "Large": 48}, "desktop"
+    ratio_mode = st.session_state.get("canvas_ratio", "Standard")
+    aspect_ratio = CANVAS_RATIOS.get(ratio_mode, 0.625)
 
-    # Auto mode: check URL query param and HTTP request headers
-    view_param = st.query_params.get("view", "").lower()
+    # 1. Read dynamically measured container width from query params if available
+    cw_param = st.query_params.get("cw", "")
+    detected_w = None
+    if cw_param:
+        try:
+            detected_w = int(cw_param)
+        except ValueError:
+            pass
+
+    # 2. Fallback estimation based on device hints before first client-side measurement
     ua = ""
     sec_mobile = ""
     try:
@@ -1009,22 +919,38 @@ def get_device_canvas_config():
     except Exception:
         pass
 
-    is_tablet = (view_param in ["tablet", "tab", "ipad"]) or ("ipad" in ua or "tablet" in ua)
-    is_mobile = (view_param in ["mobile", "phone"]) or (
-        sec_mobile == "?1" or any(p in ua for p in ["mobile", "iphone", "android", "ipod", "blackberry", "windows phone"])
-    )
+    is_tablet = "ipad" in ua or "tablet" in ua
+    is_mobile = sec_mobile == "?1" or any(p in ua for p in ["mobile", "iphone", "android", "ipod", "blackberry", "windows phone"])
 
-    if is_mobile and not is_tablet:
-        # Phone: 330px fits iPhone SE (375px) through iPhone 16 Pro Max (430px) without overflow
-        return 330, 250, {"Small": 10, "Medium": 18, "Large": 28}, {"Small": 18, "Medium": 28, "Large": 40}, "mobile"
-    elif is_tablet:
-        # Tablet: 500px fits iPad portrait (768px) and landscape
-        return 500, 320, {"Small": 12, "Medium": 20, "Large": 30}, {"Small": 22, "Medium": 32, "Large": 44}, "tablet"
-    else:
-        # Desktop / Laptop: 560px
-        return 560, 360, {"Small": 12, "Medium": 22, "Large": 32}, {"Small": 24, "Medium": 36, "Large": 48}, "desktop"
+    if detected_w is None:
+        if is_mobile and not is_tablet:
+            detected_w = 380  # Default fluid phone width
+        elif is_tablet:
+            detected_w = 540  # Default fluid tablet width
+        else:
+            detected_w = 640  # Default fluid desktop width
 
-CANVAS_W, CANVAS_H, BRUSH_MAP_DRAW, BRUSH_MAP_RUBBER, CURRENT_DEVICE_MODE = get_device_canvas_config()
+    # Clamp safely within ergonomic bounds
+    canvas_w = max(280, min(850, detected_w))
+    canvas_h = max(200, int(round(canvas_w * aspect_ratio)))
+
+    # Compute proportionally scaled brush strokes
+    scale = max(0.65, min(1.35, canvas_w / 560.0))
+    brush_draw = {
+        "Small": max(8, int(round(12 * scale))),
+        "Medium": max(14, int(round(20 * scale))),
+        "Large": max(22, int(round(30 * scale)))
+    }
+    brush_rubber = {
+        "Small": max(16, int(round(22 * scale))),
+        "Medium": max(26, int(round(34 * scale))),
+        "Large": max(36, int(round(46 * scale)))
+    }
+
+    device_label = "Phone" if (is_mobile and not is_tablet) else ("Tablet" if is_tablet else "Desktop")
+    return canvas_w, canvas_h, brush_draw, brush_rubber, device_label
+
+CANVAS_W, CANVAS_H, BRUSH_MAP_DRAW, BRUSH_MAP_RUBBER, DETECTED_DEVICE = get_device_canvas_config()
 
 # --- Top Header with Professional Icons ---
 logo_html = f'<img src="data:image/png;base64,{LOGO_B64}" />' if LOGO_B64 else '<span style="font-weight:800; color:#312C51;">?</span>'
@@ -1247,23 +1173,26 @@ with col_right:
 
         predict_btn_clicked = st.button("Predict Digit", key="predict_btn")
 
-        # Responsive Layout Preview Switcher
+        # Dynamic Fluid Layout Indicator & Aspect Ratio Switcher
         st.html(f"""
-        <div style="margin-top: 14px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11.5px; font-weight: 600; color: #64748B;">Device View</span>
-            <span style="font-size: 10.5px; color: #574EA6; font-weight: 600; background: #F3F0FF; padding: 2px 8px; border-radius: 6px;">{CURRENT_DEVICE_MODE.capitalize()} ({CANVAS_W}px)</span>
+        <div style="margin-top: 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 11.5px; font-weight: 600; color: #64748B;">Drawing Aspect</span>
+            <span style="font-size: 10.5px; color: #4338CA; font-weight: 700; background: #EEF2FF; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10B981;"></span>
+                Dynamic {CANVAS_W} × {CANVAS_H}px
+            </span>
         </div>
         """)
 
-        pills_val = st.pills(
-            "Device View",
-            options=["Auto", "Desktop", "Tablet", "Mobile"],
-            default=st.session_state.view_mode,
+        ratio_val = st.pills(
+            "Drawing Aspect",
+            options=["Standard", "Wide", "Compact"],
+            default=st.session_state.canvas_ratio,
             label_visibility="collapsed",
-            key="device_view_pills",
+            key="canvas_ratio_pills",
         )
-        if pills_val and pills_val != st.session_state.view_mode:
-            st.session_state.view_mode = pills_val
+        if ratio_val and ratio_val != st.session_state.canvas_ratio:
+            st.session_state.canvas_ratio = ratio_val
             st.session_state.canvas_key += 1
             st.session_state.initial_drawing = None
             st.session_state.canvas_history = []
