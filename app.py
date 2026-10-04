@@ -268,6 +268,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
     margin-bottom: clamp(10px, 1.5vw, 14px);
     overflow: hidden;
     width: 100% !important;
+    min-height: clamp(220px, 32vh, 420px) !important;
     box-sizing: border-box !important;
     position: relative;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -278,6 +279,7 @@ div[data-testid="stCustomComponentV1"]:has(iframe[title*="st_canvas"]) {{
     justify-content: center !important;
     align-items: center !important;
     width: 100% !important;
+    min-height: clamp(220px, 32vh, 420px) !important;
     overflow: hidden !important;
 }}
 
@@ -286,6 +288,7 @@ iframe[title*="st_canvas"] {{
     margin: 0 auto !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-height: clamp(220px, 32vh, 420px) !important;
     touch-action: none !important;
     border: none !important;
 }}
@@ -771,11 +774,6 @@ st.html("""
         const frame = document.querySelector('.canvas-outer-frame');
         if (!frame) return;
 
-        const curWidth = Math.floor(frame.getBoundingClientRect().width);
-        if (curWidth <= 50) return;
-
-        const targetW = Math.max(280, Math.min(850, curWidth));
-
         const iframe = document.querySelector('iframe[title*="st_canvas"]');
         if (iframe) {
             iframe.style.setProperty('width', '100%', 'important');
@@ -814,38 +812,22 @@ st.html("""
                 }
             } catch(e) {}
         }
-
-        const url = new URL(window.location);
-        const currentParam = parseInt(url.searchParams.get('cw') || '0', 10);
-
-        if (currentParam === 0 || Math.abs(curWidth - currentParam) > 75) {
-            const isInteracting = document.querySelector('.canvas-outer-frame:active') !== null;
-            if (!isInteracting) {
-                url.searchParams.set('cw', targetW.toString());
-                if (currentParam === 0) {
-                    window.location.replace(url.toString());
-                } else {
-                    window.history.replaceState({}, '', url.toString());
-                }
-            }
-        }
     }
 
     if (document.readyState === 'complete') {
-        setTimeout(adjustCanvasFluid, 60);
+        setTimeout(adjustCanvasFluid, 50);
     } else {
-        window.addEventListener('load', () => setTimeout(adjustCanvasFluid, 60));
+        window.addEventListener('load', () => setTimeout(adjustCanvasFluid, 50));
     }
 
     let resizeTimer;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(adjustCanvasFluid, 300);
+        resizeTimer = setTimeout(adjustCanvasFluid, 200);
     });
 
     const observer = new ResizeObserver(() => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(adjustCanvasFluid, 150);
+        adjustCanvasFluid();
     });
     const mainTarget = document.querySelector('.block-container') || document.body;
     observer.observe(mainTarget);
@@ -854,9 +836,6 @@ st.html("""
 """, unsafe_allow_javascript=True)
 
 # --- State Management ---
-if "canvas_key" not in st.session_state:
-    st.session_state.canvas_key = 0
-
 if "brush_size" not in st.session_state:
     st.session_state.brush_size = "Medium"
 
@@ -883,6 +862,9 @@ if "last_canvas_sig" not in st.session_state:
 
 if "canvas_ratio" not in st.session_state:
     st.session_state.canvas_ratio = "Standard"
+
+if "history_updated" not in st.session_state:
+    st.session_state.history_updated = False
 
 # --- Dynamic Fluid Canvas Dimension Engine ---
 CANVAS_RATIOS = {
@@ -950,7 +932,17 @@ def get_device_canvas_config():
     device_label = "Phone" if (is_mobile and not is_tablet) else ("Tablet" if is_tablet else "Desktop")
     return canvas_w, canvas_h, brush_draw, brush_rubber, device_label
 
-CANVAS_W, CANVAS_H, BRUSH_MAP_DRAW, BRUSH_MAP_RUBBER, DETECTED_DEVICE = get_device_canvas_config()
+# Compute initial dimensions and preserve in session state across all reruns
+INIT_CANVAS_W, INIT_CANVAS_H, BRUSH_MAP_DRAW, BRUSH_MAP_RUBBER, DETECTED_DEVICE = get_device_canvas_config()
+
+if "canvas_w" not in st.session_state:
+    st.session_state.canvas_w = INIT_CANVAS_W
+
+if "canvas_h" not in st.session_state:
+    st.session_state.canvas_h = INIT_CANVAS_H
+
+CANVAS_W = st.session_state.canvas_w
+CANVAS_H = st.session_state.canvas_h
 
 # --- Top Header with Professional Icons ---
 logo_html = f'<img src="data:image/png;base64,{LOGO_B64}" />' if LOGO_B64 else '<span style="font-weight:800; color:#312C51;">?</span>'
@@ -1018,25 +1010,36 @@ with col_left:
             stroke_width=active_width,
             stroke_color=active_stroke,
             background_color="#FFFFFF",
-            height=CANVAS_H,
-            width=CANVAS_W,
+            height=st.session_state.canvas_h,
+            width=st.session_state.canvas_w,
             drawing_mode="freedraw",
             initial_drawing=st.session_state.initial_drawing,
             display_toolbar=False,
-            key=f"canvas_mnist_{st.session_state.canvas_key}_{CANVAS_W}_{CANVAS_H}",
+            key="mnist_drawing_canvas",
             update_streamlit=True,
         )
         st.html('</div>')
 
-        # Synchronize stroke history without altering initial_drawing
-        # Keeping initial_drawing constant guarantees fabric.js NEVER wipes new strokes on rerun!
+        # Synchronize stroke history without altering initial_drawing during active drawing
         if canvas_result and canvas_result.json_data and "objects" in canvas_result.json_data:
             current_objects = canvas_result.json_data["objects"]
-            if len(current_objects) > len(st.session_state.canvas_history):
-                st.session_state.canvas_history = list(current_objects)
-                st.session_state.redo_stack.clear()
-            elif len(current_objects) > 0:
-                st.session_state.canvas_history = list(current_objects)
+            if st.session_state.get("history_updated", False):
+                if len(current_objects) == len(st.session_state.canvas_history):
+                    st.session_state.history_updated = False
+            else:
+                if len(current_objects) > len(st.session_state.canvas_history):
+                    st.session_state.canvas_history = list(current_objects)
+                    st.session_state.redo_stack.clear()
+                    st.session_state.initial_drawing = {
+                        "version": "4.4.0",
+                        "objects": list(current_objects),
+                    }
+                elif len(current_objects) < len(st.session_state.canvas_history) and len(current_objects) > 0:
+                    st.session_state.canvas_history = list(current_objects)
+                    st.session_state.initial_drawing = {
+                        "version": "4.4.0",
+                        "objects": list(current_objects),
+                    }
 
         # --- Controls: Row 1 - Action Buttons (Draw, Rubber, Undo, Redo, Clear) ---
         act_c1, act_c2, act_c3, act_c4, act_c5 = st.columns([1, 1, 1, 1, 1])
@@ -1064,8 +1067,10 @@ with col_left:
                         "version": "4.4.0",
                         "objects": list(st.session_state.canvas_history),
                     }
-                    st.session_state.canvas_key += 1
+                    st.session_state.history_updated = True
                     st.session_state.last_canvas_sig = None
+                    if len(st.session_state.canvas_history) == 0:
+                        st.session_state.last_prediction = None
                     st.rerun()
 
         with act_c4:
@@ -1077,7 +1082,7 @@ with col_left:
                         "version": "4.4.0",
                         "objects": list(st.session_state.canvas_history),
                     }
-                    st.session_state.canvas_key += 1
+                    st.session_state.history_updated = True
                     st.session_state.last_canvas_sig = None
                     st.rerun()
 
@@ -1085,8 +1090,11 @@ with col_left:
             if st.button("Clear", key="act_clear", help="Clear canvas"):
                 st.session_state.canvas_history = []
                 st.session_state.redo_stack = []
-                st.session_state.initial_drawing = None
-                st.session_state.canvas_key += 1
+                st.session_state.initial_drawing = {
+                    "version": "4.4.0",
+                    "objects": [],
+                }
+                st.session_state.history_updated = True
                 st.session_state.last_prediction = None
                 st.session_state.last_canvas_sig = None
                 st.rerun()
@@ -1193,10 +1201,8 @@ with col_right:
         )
         if ratio_val and ratio_val != st.session_state.canvas_ratio:
             st.session_state.canvas_ratio = ratio_val
-            st.session_state.canvas_key += 1
-            st.session_state.initial_drawing = None
-            st.session_state.canvas_history = []
-            st.session_state.redo_stack = []
+            aspect_ratio = CANVAS_RATIOS.get(ratio_val, 0.625)
+            st.session_state.canvas_h = max(200, int(round(st.session_state.canvas_w * aspect_ratio)))
             st.session_state.last_prediction = None
             st.session_state.last_canvas_sig = None
             st.rerun()
@@ -1204,12 +1210,12 @@ with col_right:
     # ----------------------------------------------------------
     # Smart Multi-Digit Prediction Engine (Uses latest visible canvas)
     # ----------------------------------------------------------
-    canvas_objects_count = len(canvas_result.json_data.get("objects", [])) if (canvas_result and canvas_result.json_data) else 0
+    canvas_objects_count = len(st.session_state.canvas_history)
     current_canvas_sig = (canvas_objects_count, selected_model_name)
 
     needs_prediction = (
         predict_btn_clicked or 
-        (canvas_result is not None and canvas_result.image_data is not None and canvas_objects_count > 0 and current_canvas_sig != st.session_state.last_canvas_sig)
+        (not st.session_state.get("history_updated", False) and canvas_result is not None and canvas_result.image_data is not None and canvas_objects_count > 0 and current_canvas_sig != st.session_state.last_canvas_sig)
     )
 
     if needs_prediction and canvas_result is not None and canvas_result.image_data is not None:
