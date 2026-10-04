@@ -256,39 +256,25 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
     margin-bottom: clamp(8px, 1.5vw, 14px);
 }}
 
-/* ===== DYNAMIC CANVAS FRAME & IFRAME ===== */
-.canvas-outer-frame {{
-    border: 1.5px solid #E2E8F0;
-    border-radius: clamp(10px, 1.6vw, 14px);
-    padding: 0;
-    background: #FFFFFF;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: clamp(10px, 1.5vw, 14px);
-    overflow: hidden;
-    width: 100% !important;
-    min-height: clamp(220px, 32vh, 420px) !important;
-    box-sizing: border-box !important;
-    position: relative;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02);
-}}
-
+/* ===== CANVAS FRAME & IFRAME STYLING ===== */
 div[data-testid="stCustomComponentV1"]:has(iframe[title*="st_canvas"]) {{
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     width: 100% !important;
-    min-height: clamp(220px, 32vh, 420px) !important;
+    border: 1.5px solid #E2E8F0 !important;
+    border-radius: clamp(10px, 1.6vw, 14px) !important;
+    background: #FFFFFF !important;
+    box-sizing: border-box !important;
+    margin-bottom: clamp(10px, 1.5vw, 14px) !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
     overflow: hidden !important;
 }}
 
 iframe[title*="st_canvas"] {{
     display: block !important;
     margin: 0 auto !important;
-    width: 100% !important;
     max-width: 100% !important;
-    min-height: clamp(220px, 32vh, 420px) !important;
     touch-action: none !important;
     border: none !important;
 }}
@@ -738,11 +724,11 @@ div[class*="st-key-predict_btn"] button:active {{
 
 /* Clean Column Stacking on screens <= 860px */
 @media (max-width: 860px) {{
-    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:first-child:has(.canvas-outer-frame)) {{
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:first-child:has(iframe[title*="st_canvas"])) {{
         flex-direction: column !important;
         gap: 12px !important;
     }}
-    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:first-child:has(.canvas-outer-frame)) > div[data-testid="column"] {{
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:first-child:has(iframe[title*="st_canvas"])) > div[data-testid="column"] {{
         width: 100% !important;
         flex: 1 1 100% !important;
         max-width: 100% !important;
@@ -765,75 +751,6 @@ div[class*="st-key-predict_btn"] button:active {{
 }}
 </style>
 """)
-
-# Client-Side Dynamic Viewport & Responsive Iframe Bridge
-st.html("""
-<script>
-(function() {
-    function adjustCanvasFluid() {
-        const frame = document.querySelector('.canvas-outer-frame');
-        if (!frame) return;
-
-        const iframe = document.querySelector('iframe[title*="st_canvas"]');
-        if (iframe) {
-            iframe.style.setProperty('width', '100%', 'important');
-            iframe.style.setProperty('max-width', '100%', 'important');
-
-            try {
-                const doc = iframe.contentDocument || iframe.contentWindow.document;
-                if (doc && !doc.getElementById('canvas-fluid-style')) {
-                    const style = doc.createElement('style');
-                    style.id = 'canvas-fluid-style';
-                    style.textContent = `
-                        html, body, #root {
-                            width: 100% !important;
-                            height: 100% !important;
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            overflow: hidden !important;
-                            display: flex !important;
-                            justify-content: center !important;
-                            align-items: center !important;
-                        }
-                        .canvas-container {
-                            width: 100% !important;
-                            height: 100% !important;
-                            margin: 0 auto !important;
-                        }
-                        canvas.lower-canvas, canvas.upper-canvas {
-                            width: 100% !important;
-                            height: 100% !important;
-                            left: 0 !important;
-                            top: 0 !important;
-                            touch-action: none !important;
-                        }
-                    `;
-                    doc.head.appendChild(style);
-                }
-            } catch(e) {}
-        }
-    }
-
-    if (document.readyState === 'complete') {
-        setTimeout(adjustCanvasFluid, 50);
-    } else {
-        window.addEventListener('load', () => setTimeout(adjustCanvasFluid, 50));
-    }
-
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(adjustCanvasFluid, 200);
-    });
-
-    const observer = new ResizeObserver(() => {
-        adjustCanvasFluid();
-    });
-    const mainTarget = document.querySelector('.block-container') || document.body;
-    observer.observe(mainTarget);
-})();
-</script>
-""", unsafe_allow_javascript=True)
 
 # --- State Management ---
 if "brush_size" not in st.session_state:
@@ -875,23 +792,12 @@ CANVAS_RATIOS = {
 
 def get_device_canvas_config():
     """
-    Dynamically computes canvas dimensions and stroke widths based on the client's
-    actual container width (via URL query param 'cw' or viewport hints) and selected aspect ratio.
-    Automatically adapts to all phone widths (360px-440px), tablets, and desktops without rigid static sizes.
+    Dynamically computes canvas dimensions and stroke widths based on device type
+    (phones, tablets, and desktops) and selected aspect ratio.
     """
     ratio_mode = st.session_state.get("canvas_ratio", "Standard")
     aspect_ratio = CANVAS_RATIOS.get(ratio_mode, 0.625)
 
-    # 1. Read dynamically measured container width from query params if available
-    cw_param = st.query_params.get("cw", "")
-    detected_w = None
-    if cw_param:
-        try:
-            detected_w = int(cw_param)
-        except ValueError:
-            pass
-
-    # 2. Fallback estimation based on device hints before first client-side measurement
     ua = ""
     sec_mobile = ""
     try:
@@ -904,16 +810,13 @@ def get_device_canvas_config():
     is_tablet = "ipad" in ua or "tablet" in ua
     is_mobile = sec_mobile == "?1" or any(p in ua for p in ["mobile", "iphone", "android", "ipod", "blackberry", "windows phone"])
 
-    if detected_w is None:
-        if is_mobile and not is_tablet:
-            detected_w = 380  # Default fluid phone width
-        elif is_tablet:
-            detected_w = 540  # Default fluid tablet width
-        else:
-            detected_w = 640  # Default fluid desktop width
+    if is_mobile and not is_tablet:
+        canvas_w = 340  # Ergonomic fluid phone width fitting all standard phones
+    elif is_tablet:
+        canvas_w = 520  # Ergonomic fluid tablet width
+    else:
+        canvas_w = 560  # Ergonomic fluid desktop width
 
-    # Clamp safely within ergonomic bounds
-    canvas_w = max(280, min(850, detected_w))
     canvas_h = max(200, int(round(canvas_w * aspect_ratio)))
 
     # Compute proportionally scaled brush strokes
@@ -935,10 +838,9 @@ def get_device_canvas_config():
 # Compute initial dimensions and preserve in session state across all reruns
 INIT_CANVAS_W, INIT_CANVAS_H, BRUSH_MAP_DRAW, BRUSH_MAP_RUBBER, DETECTED_DEVICE = get_device_canvas_config()
 
-if "canvas_w" not in st.session_state:
+if "detected_device" not in st.session_state or st.session_state.detected_device != DETECTED_DEVICE:
+    st.session_state.detected_device = DETECTED_DEVICE
     st.session_state.canvas_w = INIT_CANVAS_W
-
-if "canvas_h" not in st.session_state:
     st.session_state.canvas_h = INIT_CANVAS_H
 
 CANVAS_W = st.session_state.canvas_w
@@ -1003,8 +905,6 @@ with col_left:
             active_stroke = st.session_state.selected_color
             active_width = BRUSH_MAP_DRAW[st.session_state.brush_size]
 
-        # Canvas Frame - Kept at a stable position with NO preceding conditional elements
-        st.html('<div class="canvas-outer-frame">')
         canvas_result = st_canvas(
             fill_color="rgba(255, 255, 255, 0)",
             stroke_width=active_width,
@@ -1018,7 +918,6 @@ with col_left:
             key="mnist_drawing_canvas",
             update_streamlit=True,
         )
-        st.html('</div>')
 
         # Synchronize stroke history without altering initial_drawing during active drawing
         if canvas_result and canvas_result.json_data and "objects" in canvas_result.json_data:
@@ -1030,16 +929,8 @@ with col_left:
                 if len(current_objects) > len(st.session_state.canvas_history):
                     st.session_state.canvas_history = list(current_objects)
                     st.session_state.redo_stack.clear()
-                    st.session_state.initial_drawing = {
-                        "version": "4.4.0",
-                        "objects": list(current_objects),
-                    }
                 elif len(current_objects) < len(st.session_state.canvas_history) and len(current_objects) > 0:
                     st.session_state.canvas_history = list(current_objects)
-                    st.session_state.initial_drawing = {
-                        "version": "4.4.0",
-                        "objects": list(current_objects),
-                    }
 
         # --- Controls: Row 1 - Action Buttons (Draw, Rubber, Undo, Redo, Clear) ---
         act_c1, act_c2, act_c3, act_c4, act_c5 = st.columns([1, 1, 1, 1, 1])
