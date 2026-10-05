@@ -1397,7 +1397,10 @@ components.html(
                 if (!iframe.contentDocument) return;
                 var doc = iframe.contentDocument;
                 var containers = doc.querySelectorAll('.canvas-container');
-                if (!containers || containers.length === 0) return;
+                if (!containers || containers.length === 0) {{
+                    setTimeout(updateScale, 100);
+                    return;
+                }}
 
                 var w = iframe.clientWidth;
                 if (w <= 0) return;
@@ -1407,12 +1410,36 @@ components.html(
                 for (var i = 0; i < containers.length; i++) {{
                     containers[i].style.transformOrigin = '0 0';
                     containers[i].style.transform = 'scale(' + scale + ')';
+                    containers[i].style.touchAction = 'none';
                 }}
 
+                doc.documentElement.style.height = '100%';
+                doc.documentElement.style.overflow = 'hidden';
+                doc.body.style.height = '100%';
                 doc.body.style.margin = '0';
                 doc.body.style.padding = '0';
                 doc.body.style.overflow = 'hidden';
-                doc.documentElement.style.overflow = 'hidden';
+
+                var root = doc.getElementById('root');
+                if (root) {{
+                    root.style.height = '100%';
+                    if (root.firstElementChild) {{
+                        root.firstElementChild.style.height = '100%';
+                    }}
+                }}
+
+                var uppers = doc.querySelectorAll('.upper-canvas');
+                for (var j = 0; j < uppers.length; j++) {{
+                    uppers[j].style.touchAction = 'none';
+                }}
+
+                if (!iframe.__has_doc_mo && doc.body && iframe.contentWindow) {{
+                    iframe.__has_doc_mo = true;
+                    var docMo = new iframe.contentWindow.MutationObserver(function() {{
+                        updateScale();
+                    }});
+                    docMo.observe(doc.body, {{ childList: true, subtree: true }});
+                }}
             }}
 
             if (!iframe.__has_ro) {{
