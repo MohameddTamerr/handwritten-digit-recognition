@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import numpy as np
 import io
 import base64
@@ -54,6 +55,67 @@ if BG_B64:
 else:
     bg_css = ".stApp { background: #FCFBF9 !important; }"
 
+# --- State Management ---
+if "brush_size" not in st.session_state:
+    st.session_state.brush_size = "Medium"
+
+if "selected_color" not in st.session_state:
+    st.session_state.selected_color = "#312C51"
+
+if "is_eraser" not in st.session_state:
+    st.session_state.is_eraser = False
+
+if "canvas_history" not in st.session_state:
+    st.session_state.canvas_history = []
+
+if "redo_stack" not in st.session_state:
+    st.session_state.redo_stack = []
+
+if "initial_drawing" not in st.session_state:
+    st.session_state.initial_drawing = None
+
+if "last_prediction" not in st.session_state:
+    st.session_state.last_prediction = None
+
+if "last_canvas_sig" not in st.session_state:
+    st.session_state.last_canvas_sig = None
+
+if "canvas_ratio" not in st.session_state:
+    st.session_state.canvas_ratio = "Standard"
+
+if "history_updated" not in st.session_state:
+    st.session_state.history_updated = False
+
+# --- Canonical Stable Canvas Dimensions & Proportions ---
+CANVAS_BASE_W = 560
+CANVAS_RATIO_CONFIGS = {
+    "Standard": {"ratio": 0.625, "css_aspect": "16 / 10", "mult": 10 / 16},
+    "Wide": {"ratio": 0.5625, "css_aspect": "16 / 9", "mult": 9 / 16},
+    "Compact": {"ratio": 0.75, "css_aspect": "4 / 3", "mult": 3 / 4},
+}
+
+ratio_mode = st.session_state.get("canvas_ratio", "Standard")
+if ratio_mode not in CANVAS_RATIO_CONFIGS:
+    ratio_mode = "Standard"
+    st.session_state.canvas_ratio = "Standard"
+
+active_ratio_cfg = CANVAS_RATIO_CONFIGS[ratio_mode]
+CANVAS_W = CANVAS_BASE_W
+CANVAS_H = int(round(CANVAS_BASE_W * active_ratio_cfg["ratio"]))
+st.session_state.canvas_w = CANVAS_W
+st.session_state.canvas_h = CANVAS_H
+
+BRUSH_MAP_DRAW = {
+    "Small": 12,
+    "Medium": 20,
+    "Large": 30
+}
+BRUSH_MAP_RUBBER = {
+    "Small": 22,
+    "Medium": 34,
+    "Large": 46
+}
+
 # --- Inject Clean Styling, Transitions & Professional SVG Icon Masks ---
 st.html(f"""
 <style>
@@ -62,15 +124,22 @@ st.html(f"""
 /* Fast Non-Flashing Background */
 {bg_css}
 
+:root {{
+    --canvas-aspect: {active_ratio_cfg["css_aspect"]};
+}}
+
 :root, html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMain"], section[data-testid="stMain"], .main {{
     background-color: transparent !important;
     color: #312C51 !important;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
 }}
 
 /* ===== TOUCH-FRIENDLY GLOBAL ===== */
 *, *::before, *::after {{
     -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
 }}
 
 button, a, [role="button"] {{
@@ -85,6 +154,8 @@ button, a, [role="button"] {{
     padding-right: clamp(8px, 2.5vw, 24px) !important;
     max-width: min(1320px, 95vw) !important;
     margin: 0 auto !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
 }}
 
 /* Hide Streamlit default headers & menu */
@@ -256,12 +327,22 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
     margin-bottom: clamp(8px, 1.5vw, 14px);
 }}
 
-/* ===== CANVAS FRAME & IFRAME STYLING ===== */
-div[data-testid="stCustomComponentV1"]:has(iframe[title*="st_canvas"]) {{
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
+/* ===== WHITEBOARD / CANVAS FRAME & IFRAME STYLING ===== */
+.st-key-canvas_card_wrapper,
+.st-key-canvas_card_wrapper > div {{
     width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}}
+
+iframe[title*="st_canvas"],
+.st-key-canvas_card_wrapper iframe {{
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    aspect-ratio: var(--canvas-aspect, 16 / 10) !important;
+    height: auto !important;
     border: 1.5px solid #E2E8F0 !important;
     border-radius: clamp(10px, 1.6vw, 14px) !important;
     background: #FFFFFF !important;
@@ -269,14 +350,7 @@ div[data-testid="stCustomComponentV1"]:has(iframe[title*="st_canvas"]) {{
     margin-bottom: clamp(10px, 1.5vw, 14px) !important;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
     overflow: hidden !important;
-}}
-
-iframe[title*="st_canvas"] {{
-    display: block !important;
-    margin: 0 auto !important;
-    max-width: 100% !important;
     touch-action: none !important;
-    border: none !important;
 }}
 
 /* Toolbar Labels */
@@ -289,7 +363,8 @@ iframe[title*="st_canvas"] {{
 }}
 
 /* ===== FLUID ACTION BUTTONS (Draw, Rubber, Undo, Redo, Clear) ===== */
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) {{
+.st-key-action_toolbar_container .stHorizontalBlock,
+.st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] {{
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -298,10 +373,53 @@ div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) {{
     width: 100% !important;
 }}
 
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-act_"]) > div[data-testid="column"] {{
+.st-key-action_toolbar_container .stHorizontalBlock > .stColumn,
+.st-key-action_toolbar_container .stHorizontalBlock > [data-testid="stColumn"],
+.st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > .stColumn,
+.st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {{
     width: auto !important;
     flex: 1 1 0px !important;
     min-width: 0 !important;
+    max-width: 100% !important;
+}}
+
+/* On mobile screens (<= 520px), rearrange action buttons into 2 ergonomic touch rows */
+@media (max-width: 520px) {{
+    .st-key-action_toolbar_container .stHorizontalBlock,
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] {{
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }}
+    .st-key-action_toolbar_container .stHorizontalBlock > .stColumn:nth-child(1),
+    .st-key-action_toolbar_container .stHorizontalBlock > .stColumn:nth-child(2),
+    .st-key-action_toolbar_container .stHorizontalBlock > [data-testid="stColumn"]:nth-child(1),
+    .st-key-action_toolbar_container .stHorizontalBlock > [data-testid="stColumn"]:nth-child(2),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > .stColumn:nth-child(1),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > .stColumn:nth-child(2),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) {{
+        flex: 1 1 calc(50% - 4px) !important;
+        width: calc(50% - 4px) !important;
+        min-width: calc(50% - 4px) !important;
+        max-width: calc(50% - 4px) !important;
+    }}
+    .st-key-action_toolbar_container .stHorizontalBlock > .stColumn:nth-child(3),
+    .st-key-action_toolbar_container .stHorizontalBlock > .stColumn:nth-child(4),
+    .st-key-action_toolbar_container .stHorizontalBlock > .stColumn:nth-child(5),
+    .st-key-action_toolbar_container .stHorizontalBlock > [data-testid="stColumn"]:nth-child(3),
+    .st-key-action_toolbar_container .stHorizontalBlock > [data-testid="stColumn"]:nth-child(4),
+    .st-key-action_toolbar_container .stHorizontalBlock > [data-testid="stColumn"]:nth-child(5),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > .stColumn:nth-child(3),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > .stColumn:nth-child(4),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > .stColumn:nth-child(5),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(3),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(4),
+    .st-key-action_toolbar_container div[data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(5) {{
+        flex: 1 1 calc(33.333% - 4px) !important;
+        width: calc(33.333% - 4px) !important;
+        min-width: calc(33.333% - 4px) !important;
+        max-width: calc(33.333% - 4px) !important;
+    }}
 }}
 
 div[class*="st-key-act_"] button {{
@@ -429,21 +547,46 @@ div[class*="st-key-act_clear"] button::before {{
 }}
 
 /* ===== FLUID BRUSH & COLOR BUTTONS ===== */
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]),
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) {{
+.st-key-brush_size_container div[data-testid="stHorizontalBlock"],
+.st-key-brush_size_container .stHorizontalBlock {{
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: clamp(3px, 1vw, 8px) !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    width: auto !important;
+}}
+
+.st-key-brush_size_container div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+.st-key-brush_size_container div[data-testid="stHorizontalBlock"] > .stColumn,
+.st-key-brush_size_container .stHorizontalBlock > div[data-testid="stColumn"],
+.st-key-brush_size_container .stHorizontalBlock > .stColumn {{
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    flex: 0 0 auto !important;
+}}
+
+.st-key-palette_container div[data-testid="stHorizontalBlock"],
+.st-key-palette_container .stHorizontalBlock {{
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: clamp(4px, 1.2vw, 8px) !important;
     width: 100% !important;
 }}
 
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]) > div[data-testid="column"],
-div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-color_btn_"]) > div[data-testid="column"] {{
+.st-key-palette_container div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+.st-key-palette_container div[data-testid="stHorizontalBlock"] > .stColumn,
+.st-key-palette_container .stHorizontalBlock > div[data-testid="stColumn"],
+.st-key-palette_container .stHorizontalBlock > .stColumn {{
     width: auto !important;
-    flex: 1 1 0px !important;
     min-width: 0 !important;
+    max-width: none !important;
+    flex: 0 0 auto !important;
 }}
 
 div[class*="st-key-brush_btn_"] button {{
@@ -498,14 +641,48 @@ div[class*="st-key-color_btn_active"] button {{
 
 /* Stack Brush Size and Color row vertically on screens <= 640px */
 @media (max-width: 640px) {{
-    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]):has(div[class*="st-key-color_btn_"]) {{
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="stColumn"] .st-key-brush_size_container),
+    .stHorizontalBlock:has(> .stColumn .st-key-brush_size_container) {{
         flex-direction: column !important;
         align-items: stretch !important;
-        gap: 10px !important;
+        gap: 12px !important;
     }}
-    div[data-testid="stHorizontalBlock"]:has(div[class*="st-key-brush_btn_"]):has(div[class*="st-key-color_btn_"]) > div[data-testid="column"] {{
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="stColumn"] .st-key-brush_size_container) > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="stColumn"] .st-key-brush_size_container) > .stColumn,
+    .stHorizontalBlock:has(> .stColumn .st-key-brush_size_container) > div[data-testid="stColumn"],
+    .stHorizontalBlock:has(> .stColumn .st-key-brush_size_container) > .stColumn {{
         width: 100% !important;
         flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }}
+    /* Keep brush buttons and palette buttons strictly horizontal inside on mobile */
+    .st-key-brush_size_container div[data-testid="stHorizontalBlock"],
+    .st-key-brush_size_container .stHorizontalBlock {{
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+    }}
+    .st-key-brush_size_container div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+    .st-key-brush_size_container div[data-testid="stHorizontalBlock"] > .stColumn,
+    .st-key-brush_size_container .stHorizontalBlock > div[data-testid="stColumn"],
+    .st-key-brush_size_container .stHorizontalBlock > .stColumn {{
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        flex: 0 0 auto !important;
+    }}
+    .st-key-palette_container div[data-testid="stHorizontalBlock"],
+    .st-key-palette_container .stHorizontalBlock {{
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+    }}
+    .st-key-palette_container div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+    .st-key-palette_container div[data-testid="stHorizontalBlock"] > .stColumn,
+    .st-key-palette_container .stHorizontalBlock > div[data-testid="stColumn"],
+    .st-key-palette_container .stHorizontalBlock > .stColumn {{
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        flex: 0 0 auto !important;
     }}
 }}
 
@@ -708,12 +885,17 @@ div[class*="st-key-predict_btn"] button:active {{
 }}
 
 /* Stack Model Details inner columns on mobile/small tablets */
-@media (max-width: 640px) {{
+@media (max-width: 580px) {{
+    .st-key-model_details_container .stHorizontalBlock,
     div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stHorizontalBlock"]:has(.details-subhead) {{
         flex-direction: column !important;
         gap: 12px !important;
     }}
-    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stHorizontalBlock"]:has(.details-subhead) > div[data-testid="column"] {{
+    .st-key-model_details_container .stHorizontalBlock > .stColumn,
+    .st-key-model_details_container .stHorizontalBlock > [data-testid="stColumn"],
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stHorizontalBlock"]:has(.details-subhead) > div[data-testid="column"],
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stHorizontalBlock"]:has(.details-subhead) > .stColumn,
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stHorizontalBlock"]:has(.details-subhead) > [data-testid="stColumn"] {{
         width: 100% !important;
         flex: 1 1 100% !important;
     }}
@@ -724,14 +906,19 @@ div[class*="st-key-predict_btn"] button:active {{
 
 /* Clean Column Stacking on screens <= 860px */
 @media (max-width: 860px) {{
-    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:first-child:has(iframe[title*="st_canvas"])) {{
+    div[data-testid="stHorizontalBlock"]:has(.st-key-canvas_card_wrapper),
+    .stHorizontalBlock:has(.st-key-canvas_card_wrapper) {{
         flex-direction: column !important;
-        gap: 12px !important;
+        gap: 16px !important;
     }}
-    div[data-testid="stHorizontalBlock"]:has(> div[data-testid="column"]:first-child:has(iframe[title*="st_canvas"])) > div[data-testid="column"] {{
+    div[data-testid="stHorizontalBlock"]:has(.st-key-canvas_card_wrapper) > div[data-testid="stColumn"],
+    div[data-testid="stHorizontalBlock"]:has(.st-key-canvas_card_wrapper) > .stColumn,
+    .stHorizontalBlock:has(.st-key-canvas_card_wrapper) > div[data-testid="stColumn"],
+    .stHorizontalBlock:has(.st-key-canvas_card_wrapper) > .stColumn {{
         width: 100% !important;
         flex: 1 1 100% !important;
         max-width: 100% !important;
+        min-width: 100% !important;
     }}
 }}
 
@@ -749,102 +936,25 @@ div[class*="st-key-predict_btn"] button:active {{
         font-size: 14px !important;
     }}
 }}
+/* Hide zero-height custom component helper offscreen without blocking pointer events */
+iframe[title="st.iframe"],
+iframe[title="streamlit.components.v1.custom_component"],
+div[data-testid="stCustomComponentV1"]:has(iframe[title="st.iframe"]),
+div[data-testid="stElementContainer"]:has(iframe[title="st.iframe"]),
+.element-container:has(iframe[title="st.iframe"]) {{
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+}}
 </style>
 """)
-
-# --- State Management ---
-if "brush_size" not in st.session_state:
-    st.session_state.brush_size = "Medium"
-
-if "selected_color" not in st.session_state:
-    st.session_state.selected_color = "#312C51"
-
-if "is_eraser" not in st.session_state:
-    st.session_state.is_eraser = False
-
-if "canvas_history" not in st.session_state:
-    st.session_state.canvas_history = []
-
-if "redo_stack" not in st.session_state:
-    st.session_state.redo_stack = []
-
-if "initial_drawing" not in st.session_state:
-    st.session_state.initial_drawing = None
-
-if "last_prediction" not in st.session_state:
-    st.session_state.last_prediction = None
-
-if "last_canvas_sig" not in st.session_state:
-    st.session_state.last_canvas_sig = None
-
-if "canvas_ratio" not in st.session_state:
-    st.session_state.canvas_ratio = "Standard"
-
-if "history_updated" not in st.session_state:
-    st.session_state.history_updated = False
-
-# --- Dynamic Fluid Canvas Dimension Engine ---
-CANVAS_RATIOS = {
-    "Standard": 0.625,  # 16:10 balanced ratio
-    "Wide": 0.55,      # 16:9 panoramic ratio
-    "Compact": 0.72,   # 4:3 taller ratio
-}
-
-def get_device_canvas_config():
-    """
-    Dynamically computes canvas dimensions and stroke widths based on device type
-    (phones, tablets, and desktops) and selected aspect ratio.
-    """
-    ratio_mode = st.session_state.get("canvas_ratio", "Standard")
-    aspect_ratio = CANVAS_RATIOS.get(ratio_mode, 0.625)
-
-    ua = ""
-    sec_mobile = ""
-    try:
-        headers = getattr(st.context, "headers", {})
-        ua = headers.get("user-agent", "").lower()
-        sec_mobile = headers.get("sec-ch-ua-mobile", "")
-    except Exception:
-        pass
-
-    is_tablet = "ipad" in ua or "tablet" in ua
-    is_mobile = sec_mobile == "?1" or any(p in ua for p in ["mobile", "iphone", "android", "ipod", "blackberry", "windows phone"])
-
-    if is_mobile and not is_tablet:
-        canvas_w = 340  # Ergonomic fluid phone width fitting all standard phones
-    elif is_tablet:
-        canvas_w = 520  # Ergonomic fluid tablet width
-    else:
-        canvas_w = 560  # Ergonomic fluid desktop width
-
-    canvas_h = max(200, int(round(canvas_w * aspect_ratio)))
-
-    # Compute proportionally scaled brush strokes
-    scale = max(0.65, min(1.35, canvas_w / 560.0))
-    brush_draw = {
-        "Small": max(8, int(round(12 * scale))),
-        "Medium": max(14, int(round(20 * scale))),
-        "Large": max(22, int(round(30 * scale)))
-    }
-    brush_rubber = {
-        "Small": max(16, int(round(22 * scale))),
-        "Medium": max(26, int(round(34 * scale))),
-        "Large": max(36, int(round(46 * scale)))
-    }
-
-    device_label = "Phone" if (is_mobile and not is_tablet) else ("Tablet" if is_tablet else "Desktop")
-    return canvas_w, canvas_h, brush_draw, brush_rubber, device_label
-
-# Compute initial dimensions and preserve in session state across all reruns
-INIT_CANVAS_W, INIT_CANVAS_H, BRUSH_MAP_DRAW, BRUSH_MAP_RUBBER, DETECTED_DEVICE = get_device_canvas_config()
-
-if "detected_device" not in st.session_state or st.session_state.detected_device != DETECTED_DEVICE:
-    st.session_state.detected_device = DETECTED_DEVICE
-    st.session_state.canvas_w = INIT_CANVAS_W
-    st.session_state.canvas_h = INIT_CANVAS_H
-
-CANVAS_W = st.session_state.canvas_w
-CANVAS_H = st.session_state.canvas_h
 
 # --- Top Header with Professional Icons ---
 logo_html = f'<img src="data:image/png;base64,{LOGO_B64}" />' if LOGO_B64 else '<span style="font-weight:800; color:#312C51;">?</span>'
@@ -905,19 +1015,20 @@ with col_left:
             active_stroke = st.session_state.selected_color
             active_width = BRUSH_MAP_DRAW[st.session_state.brush_size]
 
-        canvas_result = st_canvas(
-            fill_color="rgba(255, 255, 255, 0)",
-            stroke_width=active_width,
-            stroke_color=active_stroke,
-            background_color="#FFFFFF",
-            height=st.session_state.canvas_h,
-            width=st.session_state.canvas_w,
-            drawing_mode="freedraw",
-            initial_drawing=st.session_state.initial_drawing,
-            display_toolbar=False,
-            key="mnist_drawing_canvas",
-            update_streamlit=True,
-        )
+        with st.container(key="canvas_card_wrapper"):
+            canvas_result = st_canvas(
+                fill_color="rgba(255, 255, 255, 0)",
+                stroke_width=active_width,
+                stroke_color=active_stroke,
+                background_color="#FFFFFF",
+                height=CANVAS_H,
+                width=CANVAS_W,
+                drawing_mode="freedraw",
+                initial_drawing=st.session_state.initial_drawing,
+                display_toolbar=False,
+                key="mnist_drawing_canvas",
+                update_streamlit=True,
+            )
 
         # Synchronize stroke history without altering initial_drawing during active drawing
         if canvas_result and canvas_result.json_data and "objects" in canvas_result.json_data:
@@ -933,62 +1044,63 @@ with col_left:
                     st.session_state.canvas_history = list(current_objects)
 
         # --- Controls: Row 1 - Action Buttons (Draw, Rubber, Undo, Redo, Clear) ---
-        act_c1, act_c2, act_c3, act_c4, act_c5 = st.columns([1, 1, 1, 1, 1])
+        with st.container(key="action_toolbar_container"):
+            act_c1, act_c2, act_c3, act_c4, act_c5 = st.columns([1, 1, 1, 1, 1])
 
-        with act_c1:
-            draw_state = "inactive" if st.session_state.is_eraser else "active"
-            if st.button("Draw", key=f"act_draw_{draw_state}", help="Draw mode"):
-                if st.session_state.is_eraser:
-                    st.session_state.is_eraser = False
-                    st.rerun()
+            with act_c1:
+                draw_state = "inactive" if st.session_state.is_eraser else "active"
+                if st.button("Draw", key=f"act_draw_{draw_state}", help="Draw mode"):
+                    if st.session_state.is_eraser:
+                        st.session_state.is_eraser = False
+                        st.rerun()
 
-        with act_c2:
-            rubber_state = "active" if st.session_state.is_eraser else "inactive"
-            if st.button("Rubber", key=f"act_rubber_{rubber_state}", help="Activate rubber eraser"):
-                if not st.session_state.is_eraser:
-                    st.session_state.is_eraser = True
-                    st.rerun()
+            with act_c2:
+                rubber_state = "active" if st.session_state.is_eraser else "inactive"
+                if st.button("Rubber", key=f"act_rubber_{rubber_state}", help="Activate rubber eraser"):
+                    if not st.session_state.is_eraser:
+                        st.session_state.is_eraser = True
+                        st.rerun()
 
-        with act_c3:
-            if st.button("Undo", key="act_undo", help="Undo last stroke"):
-                if st.session_state.canvas_history and len(st.session_state.canvas_history) > 0:
-                    popped = st.session_state.canvas_history.pop()
-                    st.session_state.redo_stack.append(popped)
+            with act_c3:
+                if st.button("Undo", key="act_undo", help="Undo last stroke"):
+                    if st.session_state.canvas_history and len(st.session_state.canvas_history) > 0:
+                        popped = st.session_state.canvas_history.pop()
+                        st.session_state.redo_stack.append(popped)
+                        st.session_state.initial_drawing = {
+                            "version": "4.4.0",
+                            "objects": list(st.session_state.canvas_history),
+                        }
+                        st.session_state.history_updated = True
+                        st.session_state.last_canvas_sig = None
+                        if len(st.session_state.canvas_history) == 0:
+                            st.session_state.last_prediction = None
+                        st.rerun()
+
+            with act_c4:
+                if st.button("Redo", key="act_redo", help="Redo undone stroke"):
+                    if st.session_state.redo_stack and len(st.session_state.redo_stack) > 0:
+                        restored = st.session_state.redo_stack.pop()
+                        st.session_state.canvas_history.append(restored)
+                        st.session_state.initial_drawing = {
+                            "version": "4.4.0",
+                            "objects": list(st.session_state.canvas_history),
+                        }
+                        st.session_state.history_updated = True
+                        st.session_state.last_canvas_sig = None
+                        st.rerun()
+
+            with act_c5:
+                if st.button("Clear", key="act_clear", help="Clear canvas"):
+                    st.session_state.canvas_history = []
+                    st.session_state.redo_stack = []
                     st.session_state.initial_drawing = {
                         "version": "4.4.0",
-                        "objects": list(st.session_state.canvas_history),
+                        "objects": [],
                     }
                     st.session_state.history_updated = True
-                    st.session_state.last_canvas_sig = None
-                    if len(st.session_state.canvas_history) == 0:
-                        st.session_state.last_prediction = None
-                    st.rerun()
-
-        with act_c4:
-            if st.button("Redo", key="act_redo", help="Redo undone stroke"):
-                if st.session_state.redo_stack and len(st.session_state.redo_stack) > 0:
-                    restored = st.session_state.redo_stack.pop()
-                    st.session_state.canvas_history.append(restored)
-                    st.session_state.initial_drawing = {
-                        "version": "4.4.0",
-                        "objects": list(st.session_state.canvas_history),
-                    }
-                    st.session_state.history_updated = True
+                    st.session_state.last_prediction = None
                     st.session_state.last_canvas_sig = None
                     st.rerun()
-
-        with act_c5:
-            if st.button("Clear", key="act_clear", help="Clear canvas"):
-                st.session_state.canvas_history = []
-                st.session_state.redo_stack = []
-                st.session_state.initial_drawing = {
-                    "version": "4.4.0",
-                    "objects": [],
-                }
-                st.session_state.history_updated = True
-                st.session_state.last_prediction = None
-                st.session_state.last_canvas_sig = None
-                st.rerun()
 
         # Rubber active subtle notification placed AFTER canvas so it never shifts canvas delta path
         if st.session_state.is_eraser:
@@ -1002,48 +1114,51 @@ with col_left:
         st.html("<div style='height: 12px;'></div>")
 
         # --- Controls: Row 2 - Brush Size and Color Palette ---
-        r2_c1, r2_c2 = st.columns([32, 68])
+        with st.container(key="brush_color_container"):
+            r2_c1, r2_c2 = st.columns([32, 68])
 
-        with r2_c1:
-            st.html('<span class="toolbar-label">Brush Size</span>')
-            b_c1, b_c2, b_c3 = st.columns([1, 1, 1])
+            with r2_c1:
+                st.html('<span class="toolbar-label">Brush Size</span>')
+                with st.container(key="brush_size_container"):
+                    b_c1, b_c2, b_c3 = st.columns([1, 1, 1])
 
-            with b_c1:
-                is_s = "active" if st.session_state.brush_size == "Small" else "inactive"
-                if st.button("•", key=f"brush_btn_{is_s}_s", help="Small stroke / eraser"):
-                    st.session_state.brush_size = "Small"
-                    st.rerun()
+                    with b_c1:
+                        is_s = "active" if st.session_state.brush_size == "Small" else "inactive"
+                        if st.button("•", key=f"brush_btn_{is_s}_s", help="Small stroke / eraser"):
+                            st.session_state.brush_size = "Small"
+                            st.rerun()
 
-            with b_c2:
-                is_m = "active" if st.session_state.brush_size == "Medium" else "inactive"
-                if st.button("●", key=f"brush_btn_{is_m}_m", help="Medium stroke / eraser"):
-                    st.session_state.brush_size = "Medium"
-                    st.rerun()
+                    with b_c2:
+                        is_m = "active" if st.session_state.brush_size == "Medium" else "inactive"
+                        if st.button("●", key=f"brush_btn_{is_m}_m", help="Medium stroke / eraser"):
+                            st.session_state.brush_size = "Medium"
+                            st.rerun()
 
-            with b_c3:
-                is_l = "active" if st.session_state.brush_size == "Large" else "inactive"
-                if st.button("⬤", key=f"brush_btn_{is_l}_l", help="Large stroke / eraser"):
-                    st.session_state.brush_size = "Large"
-                    st.rerun()
+                    with b_c3:
+                        is_l = "active" if st.session_state.brush_size == "Large" else "inactive"
+                        if st.button("⬤", key=f"brush_btn_{is_l}_l", help="Large stroke / eraser"):
+                            st.session_state.brush_size = "Large"
+                            st.rerun()
 
-        with r2_c2:
-            st.html('<span class="toolbar-label">Color</span>')
-            c_cols = st.columns(len(PALETTE))
+            with r2_c2:
+                st.html('<span class="toolbar-label">Color</span>')
+                with st.container(key="palette_container"):
+                    c_cols = st.columns(len(PALETTE))
 
-            for idx, (hex_code, name) in enumerate(PALETTE):
-                with c_cols[idx]:
-                    is_col = "active" if (st.session_state.selected_color == hex_code and not st.session_state.is_eraser) else "inactive"
-                    st.html(f"""
-                    <style>
-                    div[class*="st-key-color_btn_{is_col}_{name}"] button {{
-                        background-color: {hex_code} !important;
-                    }}
-                    </style>
-                    """)
-                    if st.button(" ", key=f"color_btn_{is_col}_{name}", help=f"Draw with {name.capitalize()}"):
-                        st.session_state.selected_color = hex_code
-                        st.session_state.is_eraser = False
-                        st.rerun()
+                    for idx, (hex_code, name) in enumerate(PALETTE):
+                        with c_cols[idx]:
+                            is_col = "active" if (st.session_state.selected_color == hex_code and not st.session_state.is_eraser) else "inactive"
+                            st.html(f"""
+                            <style>
+                            div[class*="st-key-color_btn_{is_col}_{name}"] button {{
+                                background-color: {hex_code} !important;
+                            }}
+                            </style>
+                            """)
+                            if st.button(" ", key=f"color_btn_{is_col}_{name}", help=f"Draw with {name.capitalize()}"):
+                                st.session_state.selected_color = hex_code
+                                st.session_state.is_eraser = False
+                                st.rerun()
 
 
 # ==============================================================
@@ -1073,12 +1188,13 @@ with col_right:
         predict_btn_clicked = st.button("Predict Digit", key="predict_btn")
 
         # Dynamic Fluid Layout Indicator & Aspect Ratio Switcher
+        aspect_badge_label = active_ratio_cfg["css_aspect"].replace(" ", "")
         st.html(f"""
         <div style="margin-top: 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
             <span style="font-size: 11.5px; font-weight: 600; color: #64748B;">Drawing Aspect</span>
             <span style="font-size: 10.5px; color: #4338CA; font-weight: 700; background: #EEF2FF; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
                 <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10B981;"></span>
-                Dynamic {CANVAS_W} × {CANVAS_H}px
+                Responsive Fluid Canvas ({aspect_badge_label})
             </span>
         </div>
         """)
@@ -1092,8 +1208,6 @@ with col_right:
         )
         if ratio_val and ratio_val != st.session_state.canvas_ratio:
             st.session_state.canvas_ratio = ratio_val
-            aspect_ratio = CANVAS_RATIOS.get(ratio_val, 0.625)
-            st.session_state.canvas_h = max(200, int(round(st.session_state.canvas_w * aspect_ratio)))
             st.session_state.last_prediction = None
             st.session_state.last_canvas_sig = None
             st.rerun()
@@ -1187,80 +1301,138 @@ with col_right:
         </div>
         """)
 
-        det_col1, det_col2 = st.columns([38, 62], gap="medium")
+        with st.container(key="model_details_container"):
+            det_col1, det_col2 = st.columns([38, 62], gap="medium")
 
-        with det_col1:
-            st.html('<div class="details-subhead">Processed (28 × 28)</div>')
-            if active_pred is not None and "digit_details" in active_pred:
-                imgs_html = '<div class="processed-container">'
-                for idx, d_info in enumerate(active_pred["digit_details"]):
-                    pil_img = Image.fromarray(d_info["display_image"])
-                    buffered = io.BytesIO()
-                    pil_img.save(buffered, format="PNG")
-                    img_b64 = base64.b64encode(buffered.getvalue()).decode()
+            with det_col1:
+                st.html('<div class="details-subhead">Processed (28 × 28)</div>')
+                if active_pred is not None and "digit_details" in active_pred:
+                    imgs_html = '<div class="processed-container">'
+                    for idx, d_info in enumerate(active_pred["digit_details"]):
+                        pil_img = Image.fromarray(d_info["display_image"])
+                        buffered = io.BytesIO()
+                        pil_img.save(buffered, format="PNG")
+                        img_b64 = base64.b64encode(buffered.getvalue()).decode()
 
-                    label_str = f"Digit {idx+1}" if len(active_pred["digit_details"]) > 1 else "Input"
-                    imgs_html += f"""
-                    <div style="text-align: center;">
-                        <span style="font-size:10.5px; color:#64748B; font-weight:600; display:block; margin-bottom:2px;">{label_str}</span>
-                        <div class="processed-img-box">
-                            <img src="data:image/png;base64,{img_b64}" width="60" height="60" />
+                        label_str = f"Digit {idx+1}" if len(active_pred["digit_details"]) > 1 else "Input"
+                        imgs_html += f"""
+                        <div style="text-align: center;">
+                            <span style="font-size:10.5px; color:#64748B; font-weight:600; display:block; margin-bottom:2px;">{label_str}</span>
+                            <div class="processed-img-box">
+                                <img src="data:image/png;base64,{img_b64}" width="60" height="60" />
+                            </div>
                         </div>
-                    </div>
-                    """
-                imgs_html += '</div>'
-                st.html(imgs_html)
-            else:
-                st.html("""
-                <div class="processed-img-box" style="color: #64748B; font-size: 10.5px; text-align: center; width: 100%;">
-                    Waiting for drawing...
-                </div>
-                """)
-
-        with det_col2:
-            st.html('<div class="details-subhead">Top Predictions</div>')
-
-            if active_pred is not None and len(active_pred.get("digit_details", [])) > 0:
-                digits_list = active_pred["digit_details"]
-                num_digits = len(digits_list)
-
-                bars_html = ""
-                for d_idx, d_info in enumerate(digits_list):
-                    if num_digits > 1:
-                        bars_html += f"""
-                        <div class="digit-label-badge">Digit {d_idx + 1} ({d_info['digit']})</div>
                         """
+                    imgs_html += '</div>'
+                    st.html(imgs_html)
+                else:
+                    st.html("""
+                    <div class="processed-img-box" style="color: #64748B; font-size: 10.5px; text-align: center; width: 100%;">
+                        Waiting for drawing...
+                    </div>
+                    """)
 
-                    top_records = d_info["top_5"]
-                    display_records = top_records[:3] if num_digits > 1 else top_records
+            with det_col2:
+                st.html('<div class="details-subhead">Top Predictions</div>')
 
-                    bars_html += '<div class="prob-table">'
-                    for rank_idx, (r_digit, r_prob) in enumerate(display_records):
-                        fill_class = "prob-bar-fill-top" if rank_idx == 0 else "prob-bar-fill-sub"
-                        digit_color = "#1E1B4B" if rank_idx == 0 else "#64748B"
+                if active_pred is not None and len(active_pred.get("digit_details", [])) > 0:
+                    digits_list = active_pred["digit_details"]
+                    num_digits = len(digits_list)
+
+                    bars_html = ""
+                    for d_idx, d_info in enumerate(digits_list):
+                        if num_digits > 1:
+                            bars_html += f"""
+                            <div class="digit-label-badge">Digit {d_idx + 1} ({d_info['digit']})</div>
+                            """
+
+                        top_records = d_info["top_5"]
+                        display_records = top_records[:3] if num_digits > 1 else top_records
+
+                        bars_html += '<div class="prob-table">'
+                        for rank_idx, (r_digit, r_prob) in enumerate(display_records):
+                            fill_class = "prob-bar-fill-top" if rank_idx == 0 else "prob-bar-fill-sub"
+                            digit_color = "#1E1B4B" if rank_idx == 0 else "#64748B"
+                            bars_html += f"""
+                            <div class="prob-row">
+                                <span class="prob-digit" style="color: {digit_color};">{r_digit}</span>
+                                <div class="prob-bar-track">
+                                    <div class="{fill_class}" style="width: {min(100.0, max(2.0, r_prob)):.1f}%;"></div>
+                                </div>
+                                <span class="prob-pct">{r_prob:.1f}%</span>
+                            </div>
+                            """
+                        bars_html += '</div>'
+
+                    st.html(bars_html)
+                else:
+                    bars_html = '<div class="prob-table">'
+                    for placeholder_d in [0, 1, 2, 3, 4]:
                         bars_html += f"""
                         <div class="prob-row">
-                            <span class="prob-digit" style="color: {digit_color};">{r_digit}</span>
+                            <span class="prob-digit" style="color: #94A3B8;">{placeholder_d}</span>
                             <div class="prob-bar-track">
-                                <div class="{fill_class}" style="width: {min(100.0, max(2.0, r_prob)):.1f}%;"></div>
+                                <div class="prob-bar-fill-sub" style="width: 0%;"></div>
                             </div>
-                            <span class="prob-pct">{r_prob:.1f}%</span>
+                            <span class="prob-pct" style="color: #94A3B8;">0.0%</span>
                         </div>
                         """
                     bars_html += '</div>'
+                    st.html(bars_html)
 
-                st.html(bars_html)
-            else:
-                bars_html = '<div class="prob-table">'
-                for placeholder_d in [0, 1, 2, 3, 4]:
-                    bars_html += f"""
-                    <div class="prob-row">
-                        <span class="prob-digit" style="color: #94A3B8;">{placeholder_d}</span>
-                        <div class="prob-bar-track">
-                            <div class="prob-bar-fill-sub" style="width: 0%;"></div>
-                        </div>
-                        <span class="prob-pct" style="color: #94A3B8;">0.0%</span>
-                    </div>
-                    """
-                bars_html += '</div>'
-                st.html(bars_html)
+# ==============================================================
+# CLIENT-SIDE DYNAMIC CANVAS FITTER
+# Scales Fabric.js canvas seamlessly to 100% of container width
+# ==============================================================
+components.html(
+    f"""
+    <script>
+    (function() {{
+        var pDoc = window.parent.document;
+        function fitCanvas() {{
+            var iframe = pDoc.querySelector('iframe[title*="st_canvas"]');
+            if (!iframe) return;
+
+            function updateScale() {{
+                if (!iframe.contentDocument) return;
+                var doc = iframe.contentDocument;
+                var containers = doc.querySelectorAll('.canvas-container');
+                if (!containers || containers.length === 0) return;
+
+                var w = iframe.clientWidth;
+                if (w <= 0) return;
+                var baseW = {CANVAS_BASE_W};
+                var scale = w / baseW;
+
+                for (var i = 0; i < containers.length; i++) {{
+                    containers[i].style.transformOrigin = '0 0';
+                    containers[i].style.transform = 'scale(' + scale + ')';
+                }}
+
+                doc.body.style.margin = '0';
+                doc.body.style.padding = '0';
+                doc.body.style.overflow = 'hidden';
+                doc.documentElement.style.overflow = 'hidden';
+            }}
+
+            if (!iframe.__has_ro) {{
+                iframe.__has_ro = true;
+                var ro = new window.parent.ResizeObserver(function() {{ updateScale(); }});
+                ro.observe(iframe);
+                iframe.addEventListener('load', function() {{ setTimeout(updateScale, 50); }});
+            }}
+            updateScale();
+        }}
+
+        fitCanvas();
+        if (!window.parent.__mnist_canvas_fitter_installed) {{
+            window.parent.__mnist_canvas_fitter_installed = true;
+            var mo = new window.parent.MutationObserver(function() {{ fitCanvas(); }});
+            mo.observe(pDoc.body, {{ childList: true, subtree: true }});
+        }}
+    }})();
+    </script>
+    """,
+    height=0,
+)
+
