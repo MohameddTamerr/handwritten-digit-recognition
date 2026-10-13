@@ -1,6 +1,7 @@
 """
 Model loading and prediction utilities for MNIST Digit Classifier.
 Uses @st.cache_resource for caching and handles CNN, MLP, and Random Forest models.
+Integrates Out-of-Distribution (non-digit) validation and Explainable AI (XAI: Grad-CAM / Saliency).
 """
 
 import os
@@ -8,11 +9,20 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 import joblib
 import numpy as np
 import streamlit as st
 import tensorflow as tf
+
+from utils.ood_detector import validate_digit
+from utils.xai import (
+    compute_gradcam,
+    compute_saliency_map,
+    compute_rf_occlusion_attribution,
+    create_xai_overlay,
+    generate_digit_explanation
+)
 
 # Suppress TF logging
 tf.get_logger().setLevel("ERROR")
@@ -69,13 +79,11 @@ def load_trained_model(model_name: str) -> Any:
     model_type = model_info["type"]
     if model_type in ("cnn", "mlp"):
         model = tf.keras.models.load_model(str(model_path))
-        # Warm-up graph compilation
         dummy_shape = (1, 28, 28, 1) if model_type == "cnn" else (1, 784)
         dummy_input = np.zeros(dummy_shape, dtype=np.float32)
         model.predict(dummy_input, verbose=0)
     elif model_type == "rf":
         model = joblib.load(str(model_path))
-        # Warm-up
         dummy_input = np.zeros((1, 784), dtype=np.float32)
         model.predict_proba(dummy_input)
     else:
@@ -84,14 +92,21 @@ def load_trained_model(model_name: str) -> Any:
     return model
 
 
-def predict_digit(model_name: str, model_input: np.ndarray) -> Dict[str, Any]:
+def predict_digit(
+    model_name: str,
+    model_input: np.ndarray,
+    display_image: Optional[np.ndarray] = None
+) -> Dict[str, Any]:
     """
     Runs prediction using the chosen model and returns:
-    - predicted_digit (int)
+    - is_digit (bool): Whether input is a valid handwritten digit or a letter/drawing
+    - predicted_digit (Optional[int])
     - confidence (float percentage)
     - probabilities (np.ndarray of length 10)
     - top_5 (list of (digit, probability_percent))
     - has_probabilities (bool)
+    - xai (dict): Explainable AI artifacts (heatmap, overlay b64, text explanation)
+    - validation_reason (str)
     """
     model = load_trained_model(model_name)
     model_info = AVAILABLE_MODELS[model_name]
@@ -123,12 +138,47 @@ def predict_digit(model_name: str, model_input: np.ndarray) -> Dict[str, Any]:
         for idx in sorted_indices[:5]
     ]
 
+    # Run Out-of-Distribution & Non-Digit Validation
+    validation = validate_digit(model_input, display_image, probabilities)
+    is_digit = validation["is_digit"]
+
+    # Generate Explainable AI (XAI) visualizations
+    xai_data = None
+    if display_image is not None:
+        try:
+            if model_type == "cnn":
+                heatmap = compute_gradcam(model, model_input, target_class=predicted_digit)
+                xai_method = "Grad-CAM"
+            elif model_type == "mlp":
+                heatmap = compute_saliency_map(model, model_input, target_class=predicted_digit)
+                xai_method = "Saliency Map"
+            else:
+                heatmap = compute_rf_occlusion_attribution(model, model_input, target_class=predicted_digit)
+                xai_method = "Occlusion Sensitivity"
+
+            pure_heat_b64, overlay_b64 = create_xai_overlay(display_image, heatmap)
+            explanation_text = generate_digit_explanation(predicted_digit, confidence, model_type)
+
+            xai_data = {
+                "method": xai_method,
+                "heatmap_b64": pure_heat_b64,
+                "overlay_b64": overlay_b64,
+                "explanation": explanation_text
+            }
+        except Exception as e:
+            xai_data = None
+
     return {
-        "predicted_digit": predicted_digit,
+        "is_digit": is_digit,
+        "validation": validation,
+        "validation_reason": validation["reason"],
+        "predicted_digit": predicted_digit if is_digit else None,
+        "candidate_digit": predicted_digit,
         "confidence": confidence,
         "probabilities": probabilities,
         "top_5": top_5,
         "has_probabilities": has_probabilities,
         "model_type": model_type,
-        "model_info": model_info
+        "model_info": model_info,
+        "xai": xai_data
     }

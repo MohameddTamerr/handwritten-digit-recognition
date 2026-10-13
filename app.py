@@ -953,6 +953,126 @@ div[data-testid="stElementContainer"]:has(iframe[title="st.iframe"]),
     top: -9999px !important;
     left: -9999px !important;
 }}
+
+/* ===== NON-DIGIT REJECTION CARD ===== */
+.pred-card-rejected {{
+    background: #FFF5F5 !important;
+    border: 1.5px solid #FECACA !important;
+    border-radius: clamp(12px, 2vw, 18px) !important;
+    padding: clamp(12px, 2vw, 18px) clamp(12px, 2vw, 20px) !important;
+    text-align: center !important;
+    margin-bottom: clamp(10px, 1.5vw, 14px) !important;
+    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.08) !important;
+    animation: fadeInUp 0.4s ease both !important;
+}}
+
+.pred-rejected-badge {{
+    font-size: clamp(22px, 4.8vw, 30px) !important;
+    font-weight: 800 !important;
+    color: #DC2626 !important;
+    line-height: 1.2 !important;
+    margin: 6px 0 !important;
+    letter-spacing: -0.01em !important;
+}}
+
+.pred-rejected-reason {{
+    font-size: clamp(11.5px, 2.3vw, 13px) !important;
+    font-weight: 600 !important;
+    color: #991B1B !important;
+    margin: 4px 0 6px 0 !important;
+}}
+
+.pred-rejected-hint {{
+    font-size: clamp(10.5px, 2vw, 11.5px) !important;
+    color: #B91C1C !important;
+    margin: 0 !important;
+    opacity: 0.9 !important;
+}}
+
+/* ===== EXPLAINABLE AI (XAI) SECTION ===== */
+.xai-badge {{
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #4338CA;
+    background: #EEF2FF;
+    border: 1px solid #C7D2FE;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}}
+
+.xai-grid {{
+    display: flex;
+    justify-content: center;
+    gap: clamp(10px, 2vw, 18px);
+    flex-wrap: wrap;
+    margin: 10px 0;
+}}
+
+.xai-item {{
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}}
+
+.xai-img-box {{
+    background: #0F172A;
+    border-radius: 10px;
+    padding: 6px;
+    width: clamp(70px, 14vw, 86px);
+    height: clamp(70px, 14vw, 86px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}}
+
+.xai-img-box:hover {{
+    transform: scale(1.06);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25);
+}}
+
+.xai-img-box img {{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+}}
+
+.xai-legend-bar {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748B;
+    margin: 8px 0;
+    width: 100%;
+}}
+
+.xai-legend-grad {{
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #1E1B4B 0%, #3B82F6 30%, #EC4899 60%, #EF4444 85%, #FDE047 100%);
+    flex-grow: 1;
+    margin: 0 8px;
+}}
+
+.xai-expl-box {{
+    background: #F8FAFC;
+    border-left: 3.5px solid #6366F1;
+    border-radius: 0 8px 8px 0;
+    padding: 8px 12px;
+    font-size: clamp(11px, 2.2vw, 12px);
+    color: #334155;
+    line-height: 1.45;
+    margin-top: 8px;
+}}
 </style>
 """)
 
@@ -1232,18 +1352,29 @@ with col_right:
 
             digit_preds = []
             for seg in digit_segments:
-                res = predict_digit(selected_model_name, seg["model_input"])
+                res = predict_digit(selected_model_name, seg["model_input"], seg["display_image"])
                 digit_preds.append({
+                    "is_digit": res["is_digit"],
                     "digit": res["predicted_digit"],
+                    "candidate_digit": res["candidate_digit"],
                     "confidence": res["confidence"],
                     "top_5": res["top_5"],
-                    "display_image": seg["display_image"]
+                    "display_image": seg["display_image"],
+                    "xai": res["xai"],
+                    "validation_reason": res["validation_reason"],
+                    "validation": res["validation"]
                 })
 
-            combined_str = "".join(str(item["digit"]) for item in digit_preds)
-            avg_conf = float(np.mean([item["confidence"] for item in digit_preds]))
+            all_digits_valid = all(item["is_digit"] for item in digit_preds)
+            if all_digits_valid:
+                combined_str = "".join(str(item["digit"]) for item in digit_preds)
+                avg_conf = float(np.mean([item["confidence"] for item in digit_preds]))
+            else:
+                combined_str = None
+                avg_conf = 0.0
 
             st.session_state.last_prediction = {
+                "all_digits_valid": all_digits_valid,
                 "combined_digits": combined_str,
                 "confidence": avg_conf,
                 "digit_details": digit_preds,
@@ -1262,22 +1393,37 @@ with col_right:
     # CARD 2: PREDICTION RESULT
     # ----------------------------------------------------------
     if active_pred is not None:
-        comb_digits = active_pred["combined_digits"]
-        p_conf = active_pred["confidence"]
-        num_digits = len(active_pred["digit_details"])
+        if active_pred.get("all_digits_valid", True) and active_pred.get("combined_digits") is not None:
+            comb_digits = active_pred["combined_digits"]
+            p_conf = active_pred["confidence"]
+            num_digits = len(active_pred["digit_details"])
 
-        conf_label = f"Confidence: <span>{p_conf:.1f}%</span>" if num_digits == 1 else f"Avg Confidence: <span>{p_conf:.1f}%</span> ({num_digits} digits)"
+            conf_label = f"Confidence: <span>{p_conf:.1f}%</span>" if num_digits == 1 else f"Avg Confidence: <span>{p_conf:.1f}%</span> ({num_digits} digits)"
 
-        st.html(f"""
-        <div class="prediction-card">
-            <div class="pred-header">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E06D53" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                <span>Prediction Result</span>
+            st.html(f"""
+            <div class="prediction-card">
+                <div class="pred-header">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E06D53" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span>Prediction Result</span>
+                </div>
+                <div class="pred-digit">{comb_digits}</div>
+                <p class="pred-confidence">{conf_label}</p>
             </div>
-            <div class="pred-digit">{comb_digits}</div>
-            <p class="pred-confidence">{conf_label}</p>
-        </div>
-        """)
+            """)
+        else:
+            first_invalid = next((d for d in active_pred["digit_details"] if not d["is_digit"]), active_pred["digit_details"][0])
+            rejection_reason = first_invalid.get("validation_reason", "Drawing recognized as non-digit character or doodle.")
+            st.html(f"""
+            <div class="pred-card-rejected">
+                <div class="pred-header" style="color: #DC2626;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>Input Rejected (Non-Digit)</span>
+                </div>
+                <div class="pred-rejected-badge">⚠️ Not a Digit</div>
+                <p class="pred-rejected-reason">{rejection_reason}</p>
+                <p class="pred-rejected-hint">Please draw handwritten numbers (0 to 9). Letters, drawings, and doodles are not classified as numbers.</p>
+            </div>
+            """)
     else:
         st.html("""
         <div class="prediction-card" style="border: 1.5px dashed #FCDCC3; background: #FFFCF9;">
@@ -1314,7 +1460,8 @@ with col_right:
                         pil_img.save(buffered, format="PNG")
                         img_b64 = base64.b64encode(buffered.getvalue()).decode()
 
-                        label_str = f"Digit {idx+1}" if len(active_pred["digit_details"]) > 1 else "Input"
+                        tag_status = f"#{d_info['digit']}" if d_info["is_digit"] else "Non-Digit"
+                        label_str = f"Digit {idx+1} ({tag_status})" if len(active_pred["digit_details"]) > 1 else tag_status
                         imgs_html += f"""
                         <div style="text-align: center;">
                             <span style="font-size:10.5px; color:#64748B; font-weight:600; display:block; margin-bottom:2px;">{label_str}</span>
@@ -1333,38 +1480,58 @@ with col_right:
                     """)
 
             with det_col2:
-                st.html('<div class="details-subhead">Top Predictions</div>')
+                st.html('<div class="details-subhead">Prediction / Validation</div>')
 
                 if active_pred is not None and len(active_pred.get("digit_details", [])) > 0:
                     digits_list = active_pred["digit_details"]
-                    num_digits = len(digits_list)
+                    all_valid = active_pred.get("all_digits_valid", True)
 
-                    bars_html = ""
-                    for d_idx, d_info in enumerate(digits_list):
-                        if num_digits > 1:
-                            bars_html += f"""
-                            <div class="digit-label-badge">Digit {d_idx + 1} ({d_info['digit']})</div>
-                            """
+                    if all_valid:
+                        num_digits = len(digits_list)
+                        bars_html = ""
+                        for d_idx, d_info in enumerate(digits_list):
+                            if num_digits > 1:
+                                bars_html += f"""
+                                <div class="digit-label-badge">Digit {d_idx + 1} ({d_info['digit']})</div>
+                                """
 
-                        top_records = d_info["top_5"]
-                        display_records = top_records[:3] if num_digits > 1 else top_records
+                            top_records = d_info["top_5"]
+                            display_records = top_records[:3] if num_digits > 1 else top_records
 
-                        bars_html += '<div class="prob-table">'
-                        for rank_idx, (r_digit, r_prob) in enumerate(display_records):
-                            fill_class = "prob-bar-fill-top" if rank_idx == 0 else "prob-bar-fill-sub"
-                            digit_color = "#1E1B4B" if rank_idx == 0 else "#64748B"
-                            bars_html += f"""
-                            <div class="prob-row">
-                                <span class="prob-digit" style="color: {digit_color};">{r_digit}</span>
-                                <div class="prob-bar-track">
-                                    <div class="{fill_class}" style="width: {min(100.0, max(2.0, r_prob)):.1f}%;"></div>
+                            bars_html += '<div class="prob-table">'
+                            for rank_idx, (r_digit, r_prob) in enumerate(display_records):
+                                fill_class = "prob-bar-fill-top" if rank_idx == 0 else "prob-bar-fill-sub"
+                                digit_color = "#1E1B4B" if rank_idx == 0 else "#64748B"
+                                bars_html += f"""
+                                <div class="prob-row">
+                                    <span class="prob-digit" style="color: {digit_color};">{r_digit}</span>
+                                    <div class="prob-bar-track">
+                                        <div class="{fill_class}" style="width: {min(100.0, max(2.0, r_prob)):.1f}%;"></div>
+                                    </div>
+                                    <span class="prob-pct">{r_prob:.1f}%</span>
                                 </div>
-                                <span class="prob-pct">{r_prob:.1f}%</span>
+                                """
+                            bars_html += '</div>'
+                        st.html(bars_html)
+                    else:
+                        first_inv = next((d for d in digits_list if not d["is_digit"]), digits_list[0])
+                        val_meta = first_inv.get("validation", {})
+                        d_score = val_meta.get("digit_score", 0.0)
+                        h_count = val_meta.get("holes", 0)
+                        c_count = val_meta.get("components", 0)
+                        r_reason = first_inv.get("validation_reason", "Out-of-distribution drawing")
+                        st.html(f"""
+                        <div style="background: #FEF2F2; border: 1px solid #FEE2E2; border-radius: 8px; padding: 10px 12px; font-size: 11.5px; color: #991B1B;">
+                            <div style="font-weight: 700; margin-bottom: 5px; display: flex; align-items: center; gap: 6px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                <span>Input Validation Details</span>
                             </div>
-                            """
-                        bars_html += '</div>'
-
-                    st.html(bars_html)
+                            <div style="margin-bottom: 3px;"><strong>Status:</strong> Rejected (Non-Digit)</div>
+                            <div style="margin-bottom: 3px;"><strong>Digit Likelihood:</strong> {d_score:.1f}%</div>
+                            <div style="margin-bottom: 3px;"><strong>Topology:</strong> {h_count} enclosed loop(s), {c_count} stroke part(s)</div>
+                            <div style="font-size: 11px; color: #B91C1C; margin-top: 5px; line-height: 1.35;">{r_reason}</div>
+                        </div>
+                        """)
                 else:
                     bars_html = '<div class="prob-table">'
                     for placeholder_d in [0, 1, 2, 3, 4]:
@@ -1379,6 +1546,100 @@ with col_right:
                         """
                     bars_html += '</div>'
                     st.html(bars_html)
+
+    # ----------------------------------------------------------
+    # CARD 4: EXPLAINABLE AI (XAI)
+    # ----------------------------------------------------------
+    with st.container(border=True):
+        st.html("""
+        <div class="card-header" style="margin-bottom: 8px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+            <span>Explainable AI (XAI)</span>
+        </div>
+        """)
+
+        if active_pred is not None and "digit_details" in active_pred and len(active_pred["digit_details"]) > 0:
+            digits_list = active_pred["digit_details"]
+            num_digits = len(digits_list)
+
+            if num_digits > 1:
+                digit_opts = [f"Digit {i+1} ({'#' + str(d['digit']) if d['is_digit'] else 'Invalid'})" for i, d in enumerate(digits_list)]
+                sel_digit_label = st.radio("Inspect digit explanation:", digit_opts, horizontal=True, label_visibility="collapsed")
+                sel_idx = digit_opts.index(sel_digit_label) if sel_digit_label in digit_opts else 0
+            else:
+                sel_idx = 0
+
+            target_digit_info = digits_list[sel_idx]
+            xai_info = target_digit_info.get("xai")
+
+            if target_digit_info["is_digit"] and xai_info is not None:
+                method_name = xai_info["method"]
+                heat_b64 = xai_info["heatmap_b64"]
+                overlay_b64 = xai_info["overlay_b64"]
+                expl_text = xai_info["explanation"]
+
+                pil_disp = Image.fromarray(target_digit_info["display_image"])
+                buf = io.BytesIO()
+                pil_disp.save(buf, format="PNG")
+                stroke_b64 = base64.b64encode(buf.getvalue()).decode()
+
+                xai_html = f"""
+                <div style="text-align: center; margin-bottom: 6px;">
+                    <span class="xai-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        Attention Model: {method_name}
+                    </span>
+                </div>
+
+                <div class="xai-grid">
+                    <div class="xai-item">
+                        <span style="font-size:10.5px; color:#64748B; font-weight:600; margin-bottom:3px;">Input Stroke</span>
+                        <div class="xai-img-box">
+                            <img src="data:image/png;base64,{stroke_b64}" />
+                        </div>
+                    </div>
+                    <div class="xai-item">
+                        <span style="font-size:10.5px; color:#64748B; font-weight:600; margin-bottom:3px;">Feature Heatmap</span>
+                        <div class="xai-img-box">
+                            <img src="data:image/png;base64,{heat_b64}" />
+                        </div>
+                    </div>
+                    <div class="xai-item">
+                        <span style="font-size:10.5px; color:#64748B; font-weight:600; margin-bottom:3px;">Attention Overlay</span>
+                        <div class="xai-img-box" style="box-shadow: 0 0 0 2px #6366F1, 0 4px 12px rgba(99, 102, 241, 0.25);">
+                            <img src="data:image/png;base64,{overlay_b64}" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="xai-legend-bar">
+                    <span>Low Focus</span>
+                    <div class="xai-legend-grad"></div>
+                    <span>High Focus</span>
+                </div>
+
+                <div class="xai-expl-box">
+                    {expl_text}
+                </div>
+                """
+                st.html(xai_html)
+            elif not target_digit_info["is_digit"]:
+                st.html("""
+                <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 10px; padding: 14px; text-align: center;">
+                    <div style="font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 4px;">Out-of-Distribution Input</div>
+                    <p style="font-size: 11.5px; color: #64748B; margin: 0; line-height: 1.4;">
+                        This character was flagged as a letter or drawing. XAI feature maps are calibrated for digit archetypes (0–9) and suppressed for non-digit inputs to prevent misleading explanations.
+                    </p>
+                </div>
+                """)
+        else:
+            st.html("""
+            <div style="background: #F8FAFC; border: 1px dashed #E2E8F0; border-radius: 10px; padding: 18px 14px; text-align: center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" style="margin-bottom: 6px;"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+                <div style="font-size: 12px; font-weight: 600; color: #64748B;">Explainable AI Ready</div>
+                <p style="font-size: 11px; color: #94A3B8; margin: 3px 0 0 0;">Draw a digit on the canvas to view real-time Grad-CAM & Saliency attention maps.</p>
+            </div>
+            """)
 
 # ==============================================================
 # CLIENT-SIDE DYNAMIC CANVAS FITTER
